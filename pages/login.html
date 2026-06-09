@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Iniciar sesión — Cocobongo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <style>
+    /* ====== LOGIN PAGE SPECIFIC ====== */
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      background: var(--navy-deeper);
+    }
+
+    /* --- Left panel: decorative --- */
+    .login-panel-left {
+      flex: 1;
+      position: relative;
+      background: linear-gradient(150deg, var(--navy-deeper) 0%, var(--navy-dark) 40%, var(--blue-mid) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 48px;
+      overflow: hidden;
+    }
+
+    /* Animated background circles */
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: .18;
+      animation: orb-drift 10s ease-in-out infinite alternate;
+    }
+    .bg-orb-1 { width: 400px; height: 400px; background: var(--blue-mid); top: -80px; left: -80px; }
+    .bg-orb-2 { width: 300px; height: 300px; background: var(--blue-light); bottom: 60px; right: -60px; animation-delay: -3s; }
+    .bg-orb-3 { width: 200px; height: 200px; background: #ffffff; top: 50%; left: 50%; animation-delay: -6s; }
+
+    @keyframes orb-drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+
+    /* Grid pattern overlay */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(213,232,240,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(213,232,240,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .panel-left-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 420px;
+    }
+
+    .panel-logo {
+      width: 80px;
+      height: 80px;
+      background: rgba(255,255,255,.1);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -1px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    }
+
+    .panel-headline {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .panel-headline span {
+      display: block;
+      color: var(--blue-light);
+    }
+
+    .panel-desc {
+      color: rgba(255,255,255,.55);
+      font-size: 14px;
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    .panel-features {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .feature-text {
+      color: rgba(255,255,255,.7);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .feature-text strong {
+      display: block;
+      color: rgba(255,255,255,.9);
+      font-weight: 500;
+    }
+
+    /* Floating tag */
+    .panel-tag {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,.25);
+      font-size: 11px;
+      letter-spacing: .08em;
+      white-space: nowrap;
+    }
+
+    /* --- Right panel: form --- */
+    .login-panel-right {
+      width: 480px;
+      min-width: 480px;
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 52px;
+      position: relative;
+    }
+
+    /* Subtle texture */
+    .login-panel-right::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 80% 10%, rgba(213,232,240,.3) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .login-form-wrap {
+      width: 100%;
+      max-width: 360px;
+      position: relative;
+    }
+
+    .login-greeting {
+      margin-bottom: 32px;
+    }
+
+    .login-greeting-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--blue-mid);
+      margin-bottom: 8px;
+    }
+
+    .login-greeting h1 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--navy);
+      line-height: 1.2;
+    }
+
+    .login-greeting p {
+      color: var(--text-sub);
+      font-size: 14px;
+      margin-top: 6px;
+      font-weight: 300;
+    }
+
+    /* Form */
+    .login-form .form-group {
+      margin-bottom: 18px;
+    }
+
+    /* Password strength bar */
+    .pass-strength {
+      margin-top: 6px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--gray-mid);
+      overflow: hidden;
+      display: none;
+    }
+
+    .pass-strength-fill {
+      height: 100%;
+      border-radius: 2px;
+      width: 0;
+      transition: width .4s var(--ease), background .4s var(--ease);
+    }
+
+    /* Remember & forgot */
+    .login-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      margin-top: -4px;
+    }
+
+    .remember-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .remember-check input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--navy);
+      cursor: pointer;
+    }
+
+    .remember-check span {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .forgot-link {
+      font-size: 12px;
+      color: var(--blue-mid);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color var(--dur-fast);
+    }
+
+    .forgot-link:hover { color: var(--navy); text-decoration: underline; }
+
+    /* Submit button */
+    .btn-login {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-login::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.15) 100%);
+    }
+
+    /* Alert de error login */
+    #login-alert {
+      display: none;
+    }
+
+    #login-alert.visible {
+      display: flex;
+    }
+
+    /* Divider */
+    .login-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 28px 0 20px;
+    }
+
+    .login-divider::before,
+    .login-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-mid);
+    }
+
+    .login-divider span {
+      font-size: 11px;
+      color: var(--gray-text);
+      white-space: nowrap;
+    }
+
+    /* Footer */
+    .auth-switch {
+      margin-top: 22px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .auth-switch a {
+      color: var(--blue-mid);
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .auth-switch a:hover {
+      color: var(--navy);
+      text-decoration: underline;
+    }
+
+    .login-footer {
+      margin-top: 28px;
+      text-align: center;
+    }
+
+    .login-footer p {
+      font-size: 11px;
+      color: var(--gray-text);
+      line-height: 1.6;
+    }
+
+    .version-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      background: var(--gray-light);
+      border-radius: 99px;
+      font-size: 10px;
+      color: var(--gray-text);
+      margin-top: 10px;
+    }
+
+    /* Forgot password modal */
+    .modal-recover .modal { max-width: 420px; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .login-panel-left { display: none; }
+      .login-panel-right { width: 100%; min-width: unset; }
+    }
+
+    @media (max-width: 480px) {
+      .login-panel-right { padding: 40px 28px; }
+      .login-form-wrap { max-width: 100%; }
+    }
+
+    /* Entrance animations */
+    .login-greeting,
+    .login-form .form-group,
+    .login-meta,
+    .btn-login-wrap,
+    .login-divider,
+    .login-footer {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp .5s var(--ease) forwards;
+    }
+
+    .login-greeting       { animation-delay: .05s; }
+    .login-form .form-group:nth-child(1) { animation-delay: .12s; }
+    .login-form .form-group:nth-child(2) { animation-delay: .18s; }
+    .login-meta           { animation-delay: .24s; }
+    .btn-login-wrap       { animation-delay: .30s; }
+    .login-divider        { animation-delay: .36s; }
+    .login-footer         { animation-delay: .42s; }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ====== TOAST CONTAINER ====== -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ====== LEFT PANEL ====== -->
+<div class="login-panel-left">
+  <div class="bg-grid"></div>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+
+  <div class="panel-left-content">
+    <div class="panel-logo">BC</div>
+    <h1 class="panel-headline">
+      Bodega
+      <span>Cocobongo</span>
+    </h1>
+    <p class="panel-desc">
+      Sistema de gestión integral para el control de inventario,
+      ventas, créditos y finanzas del negocio.
+    </p>
+
+    <div class="panel-features">
+      <div class="feature-item">
+        <div class="feature-icon">📦</div>
+        <div class="feature-text">
+          <strong>Control de inventario</strong>
+          Alertas de stock bajo y movimientos en tiempo real
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🛒</div>
+        <div class="feature-text">
+          <strong>Registro de ventas</strong>
+          Efectivo, tarjeta, transferencia o crédito (fiado)
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📈</div>
+        <div class="feature-text">
+          <strong>Reportes y estadísticas</strong>
+          Balance, ingresos y productos más vendidos
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="panel-tag">Universidad Distrital · Bases de Datos · 2026</p>
+</div>
+
+<!-- ====== RIGHT PANEL: FORM ====== -->
+<div class="login-panel-right">
+  <div class="login-form-wrap">
+
+    <div class="login-greeting">
+      <p class="login-greeting-eyebrow">Sistema de Gestión</p>
+      <h1>Bienvenido de nuevo</h1>
+      <p>Ingresa tus credenciales para continuar</p>
+    </div>
+
+    <!-- Error global -->
+    <div class="alert alert-danger" id="login-alert">
+      <span class="alert-icon">⚠</span>
+      <span id="login-alert-msg">Credenciales incorrectas. Verifica tu correo y contraseña.</span>
+    </div>
+
+    <form class="login-form" id="login-form" novalidate autocomplete="off">
+
+      <!-- Email -->
+      <div class="form-group">
+        <label class="form-label" for="email">
+          Correo electrónico <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉</span>
+          <input
+            class="form-control"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="tu@correo.com"
+            autocomplete="username"
+            spellcheck="false"
+          />
+        </div>
+        <p class="form-error" id="email-error">
+          <span>⚠</span> <span class="err-text"></span>
+        </p>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label class="form-label" for="password">
+          Contraseña <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input
+            class="form-control"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Mínimo 8 caracteres"
+            autocomplete="current-password"
+          />
+          <span class="input-action" id="toggle-pass" title="Mostrar contraseña">👁</span>
+        </div>
+        <p class="form-error" id="password-error">
+          <span>⚠</span> <span class="err-text"></span>
+        </p>
+      </div>
+
+      <!-- Remember / Forgot -->
+      <div class="login-meta">
+        <label class="remember-check">
+          <input type="checkbox" id="remember-me"/>
+          <span>Recordar sesión</span>
+        </label>
+        <a href="#" class="forgot-link" id="forgot-link">¿Olvidaste tu contraseña?</a>
+      </div>
+
+      <!-- Submit -->
+      <div class="btn-login-wrap">
+        <button type="submit" class="btn btn-primary btn-lg btn-block btn-login" id="btn-submit">
+          Iniciar sesión
+        </button>
+      </div>
+
+    </form>
+
+    <p class="auth-switch">
+      ¿Primera vez en el sistema?
+      <a href="register.html">Crear cuenta de administrador</a>
+    </p>
+
+    <div class="login-divider">
+      <span>Universidad Distrital Francisco José de Caldas</span>
+    </div>
+
+    <div class="login-footer">
+      <p>Sistema de uso exclusivo del personal autorizado de<br/><strong>Cervecería Cocobongo</strong></p>
+      <span class="version-tag">⚙ v1.0 — Bases de Datos 2026</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== MODAL: RECUPERAR CONTRASEÑA ====== -->
+<div class="modal-overlay modal-recover" id="modal-recover">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Recuperar contraseña</h2>
+      <button class="modal-close" id="modal-recover-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-sub);margin-bottom:20px;line-height:1.6;">
+        Ingresa tu correo institucional y te enviaremos instrucciones para restablecer tu contraseña.
+      </p>
+      <div class="form-group">
+        <label class="form-label" for="recover-email">
+          Correo electrónico <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉</span>
+          <input
+            class="form-control"
+            type="email"
+            id="recover-email"
+            placeholder="tu@correo.com"
+          />
+        </div>
+        <p class="form-error" id="recover-email-error">
+          <span>⚠</span> <span class="err-text"></span>
+        </p>
+      </div>
+      <div class="alert alert-success" id="recover-success" style="display:none">
+        <span class="alert-icon">✓</span>
+        <span>Si el correo existe en nuestro sistema, recibirás instrucciones en los próximos minutos.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="cancel-recover">Cancelar</button>
+      <button class="btn btn-primary" id="btn-recover">Enviar instrucciones</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SCRIPTS ====== -->
+<script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/validaciones.js"></script>
+<script>
+  /* ---- Redirect if already authenticated (validar con backend) ---- */
+  (async () => {
+    if (!Auth.isAuthenticated()) return;
+    try {
+      const user = await Auth.validateSession();
+      if (user) Auth.redirectByRole(user.role);
+    } catch {
+      Auth.clearSession();
+    }
+  })();
+
+  /* ---- DOM refs ---- */
+  const form        = document.getElementById('login-form');
+  const emailInput  = document.getElementById('email');
+  const passInput   = document.getElementById('password');
+  const btnSubmit   = document.getElementById('btn-submit');
+  const alertBox    = document.getElementById('login-alert');
+  const alertMsg    = document.getElementById('login-alert-msg');
+  const togglePass  = document.getElementById('toggle-pass');
+  const forgotLink  = document.getElementById('forgot-link');
+  const modalRecover = document.getElementById('modal-recover');
+
+  /* ---- Live validation ---- */
+  Validaciones.attachLiveValidation(emailInput, 'email');
+  Validaciones.attachLiveValidation(passInput, 'password');
+
+  /* ---- Toggle password visibility ---- */
+  togglePass.addEventListener('click', () => {
+    const isPass = passInput.type === 'password';
+    passInput.type = isPass ? 'text' : 'password';
+    togglePass.textContent = isPass ? '🙈' : '👁';
+  });
+
+  /* ---- Show/hide alert ---- */
+  function showAlert(msg) {
+    alertMsg.textContent = msg;
+    alertBox.classList.add('visible');
+    alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideAlert() { alertBox.classList.remove('visible'); }
+
+  /* ---- Form submit ---- */
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert();
+
+    const valid = Validaciones.validateForm([
+      { type: 'email',    input: emailInput },
+      { type: 'password', input: passInput  }
+    ]);
+
+    if (!valid) return;
+
+    UI.setLoading(btnSubmit, true);
+
+    try {
+      const { user } = await Auth.login(
+        emailInput.value.trim(),
+        passInput.value
+      );
+
+      UI.toast(`¡Bienvenido, ${user.name || user.email}!`, 'success', 2000);
+
+      setTimeout(() => {
+        Auth.redirectByRole(user.role);
+      }, 800);
+
+    } catch (err) {
+      UI.setLoading(btnSubmit, false);
+      showAlert(err.message || 'Error al iniciar sesión. Intenta nuevamente.');
+      passInput.value = '';
+      passInput.focus();
+      Validaciones.clearState(passInput);
+    }
+  });
+
+  /* ---- Forgot password modal ---- */
+  forgotLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    modalRecover.classList.add('open');
+    document.getElementById('recover-email').focus();
+  });
+
+  document.getElementById('modal-recover-close').addEventListener('click', closeRecoverModal);
+  document.getElementById('cancel-recover').addEventListener('click', closeRecoverModal);
+
+  modalRecover.addEventListener('click', (e) => {
+    if (e.target === modalRecover) closeRecoverModal();
+  });
+
+  function closeRecoverModal() {
+    modalRecover.classList.remove('open');
+    document.getElementById('recover-email').value = '';
+    document.getElementById('recover-success').style.display = 'none';
+    Validaciones.clearState(document.getElementById('recover-email'));
+  }
+
+  document.getElementById('btn-recover').addEventListener('click', async () => {
+    const emailEl = document.getElementById('recover-email');
+    const btn     = document.getElementById('btn-recover');
+
+    if (!Validaciones.validateEmail(emailEl)) return;
+
+    UI.setLoading(btn, true);
+
+    try {
+      await Auth.recoverPassword(emailEl.value.trim());
+    } catch { /* silent — no revelar si el correo existe */ }
+
+    UI.setLoading(btn, false);
+    document.getElementById('recover-success').style.display = 'flex';
+    btn.disabled = true;
+  });
+
+  /* ---- Remember me: pre-fill email ---- */
+  const savedEmail = localStorage.getItem('cbc_remember_email');
+  if (savedEmail) {
+    emailInput.value = savedEmail;
+    document.getElementById('remember-me').checked = true;
+  }
+
+  form.addEventListener('change', () => {
+    const remember = document.getElementById('remember-me').checked;
+    if (remember) localStorage.setItem('cbc_remember_email', emailInput.value);
+    else localStorage.removeItem('cbc_remember_email');
+  });
+
+  /* ---- Focus first field ---- */
+  window.addEventListener('load', () => {
+    (emailInput.value ? passInput : emailInput).focus();
+  });
+</script>
+</body>
+</html>

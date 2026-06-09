@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Usuarios — Cocobongo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <style>
+    .skeleton-line {
+      height: 14px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--gray-light) 25%, var(--gray-mid) 50%, var(--gray-light) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .row-fade-in { animation: rowIn .3s var(--ease) both; }
+
+    .row-actions {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    tr:hover .row-actions { opacity: 1; }
+
+    .empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+      gap: 12px;
+      text-align: center;
+    }
+    .empty-icon { font-size: 48px; opacity: .3; }
+    .empty-state h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--text-sub);
+    }
+    .empty-state p { font-size: 13px; color: var(--gray-text); }
+
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      background: var(--white);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(203,213,225,.6);
+      box-shadow: var(--shadow-xs);
+    }
+    .filter-row .form-control,
+    .filter-row select { font-size: 13px; }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+    }
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-text);
+      pointer-events: none;
+      font-size: 14px;
+    }
+    .search-wrap input { padding-left: 34px; }
+
+    .table-scroll { overflow-x: auto; }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 14px;
+    }
+
+    .form-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--blue-mid);
+      padding: 14px 0 6px;
+      border-top: 1px dashed var(--gray-mid);
+      margin-top: 4px;
+    }
+
+    .delete-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px;
+      background: var(--red-bg);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(231,76,60,.2);
+      margin-bottom: 12px;
+    }
+    .delete-warning-icon { font-size: 28px; flex-shrink: 0; }
+
+    .user-avatar-cell {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .page-fade {
+      opacity: 0;
+      animation: fadeIn .4s var(--ease) .05s both;
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    @media (max-width: 900px) {
+      .form-grid-2 { grid-template-columns: 1fr; }
+      .filter-row { flex-direction: column; align-items: stretch; }
+      .search-wrap { min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ====== TOPBAR ====== -->
+<nav class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">CB</div>
+    <div class="topbar-brand">
+      <span class="topbar-brand-name">Cocobongo</span>
+      <span class="topbar-brand-sub">Sistema de Gestión</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-notif" title="Notificaciones">
+      🔔<span class="notif-dot" id="notif-dot" style="display:none"></span>
+    </div>
+    <div class="topbar-user">
+      <div class="topbar-avatar" id="navbar-avatar">??</div>
+      <div class="topbar-user-info">
+        <div class="topbar-user-name" id="navbar-user-name">Cargando...</div>
+        <span class="topbar-user-role" id="navbar-user-role">—</span>
+      </div>
+    </div>
+    <button class="btn-logout" id="btn-logout">⏏ Salir</button>
+  </div>
+</nav>
+
+<!-- ====== SIDEBAR ====== -->
+<aside class="sidebar">
+  <nav>
+    <p class="sidebar-section-label">Principal</p>
+    <a class="s-item" href="dashboard.html"><span class="s-icon">▦</span> Dashboard</a>
+    <a class="s-item" href="ventas.html"><span class="s-icon">🛒</span> Ventas</a>
+
+    <p class="sidebar-section-label" style="margin-top:4px">Gestión</p>
+    <a class="s-item" href="inventario.html"><span class="s-icon">📦</span> Inventario</a>
+    <a class="s-item" href="clientes.html"><span class="s-icon">👥</span> Clientes</a>
+    <a class="s-item" href="gastos.html"><span class="s-icon">💰</span> Gastos</a>
+    <a class="s-item" href="reportes.html"><span class="s-icon">📈</span> Reportes</a>
+
+    <div class="sidebar-sep"></div>
+    <p class="sidebar-section-label">Administración</p>
+    <a class="s-item active" href="usuarios.html"><span class="s-icon">⚙</span> Usuarios</a>
+    <a class="s-item" href="sucursales.html"><span class="s-icon">🏪</span> Sucursales</a>
+  </nav>
+  <div style="margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.07)">
+    <p style="font-size:10px;color:rgba(255,255,255,.25);line-height:1.5">v1.0 — Bases de Datos 2026</p>
+  </div>
+</aside>
+
+<!-- ====== MAIN CONTENT ====== -->
+<div class="app-wrapper">
+  <main class="main-content page-fade">
+
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1>Usuarios</h1>
+        <p>Gestión de empleados y administradores del sistema</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="Usuarios.reload()" title="Recargar">
+          ↻ Actualizar
+        </button>
+        <button class="btn btn-primary" onclick="Usuarios.openCreate()">
+          + Nuevo usuario
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-row">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="form-control" type="text" id="search-input"
+               placeholder="Buscar por nombre o correo..." autocomplete="off"/>
+      </div>
+
+      <select class="form-control" id="filter-role" style="width:160px">
+        <option value="">Todos los roles</option>
+        <option value="ADMIN">Administrador</option>
+        <option value="EMPLOYEE">Empleado</option>
+      </select>
+
+      <select class="form-control" id="filter-branch" style="width:180px">
+        <option value="">Todas las sucursales</option>
+      </select>
+
+      <select class="form-control" id="filter-status" style="width:150px">
+        <option value="">Todos los estados</option>
+        <option value="active">✓ Activos</option>
+        <option value="inactive">✕ Inactivos</option>
+      </select>
+
+      <button class="btn btn-secondary btn-sm" id="btn-clear-filters">✕ Limpiar</button>
+
+      <span style="margin-left:auto;font-size:12px;color:var(--gray-text);white-space:nowrap">
+        <span id="count-label">cargando...</span>
+      </span>
+    </div>
+
+    <!-- Tabla -->
+    <div class="tbl-wrapper">
+      <div class="table-scroll">
+        <table class="tbl" id="users-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Correo</th>
+              <th>Rol</th>
+              <th>Sucursal</th>
+              <th>Estado</th>
+              <th>Creado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="7"><div class="skeleton-line"></div></td></tr>
+          </tbody>
+        </table>
+
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">👤</div>
+          <h3>Sin usuarios</h3>
+          <p>No hay usuarios que coincidan con los filtros aplicados.</p>
+          <button class="btn btn-primary" onclick="Usuarios.openCreate()">+ Crear usuario</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+
+<!-- ================================================================
+    MODAL: CREAR / EDITAR USUARIO
+    ================================================================ -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-user-title">Nuevo usuario</h2>
+      <button class="modal-close" onclick="document.getElementById('modal-user').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="user-form" novalidate autocomplete="off">
+
+        <!-- Nombre -->
+        <div class="form-group">
+          <label class="form-label" for="form-name">Nombre completo <span class="required">*</span></label>
+          <input class="form-control" type="text" id="form-name" placeholder="Ej. Juan Pérez"/>
+          <p class="form-error" id="form-name-error"><span>⚠</span> <span class="err-text"></span></p>
+        </div>
+
+        <!-- Correo -->
+        <div class="form-group">
+          <label class="form-label" for="form-email">Correo electrónico <span class="required">*</span></label>
+          <input class="form-control" type="email" id="form-email" placeholder="correo@ejemplo.com"/>
+          <p class="form-error" id="form-email-error"><span>⚠</span> <span class="err-text"></span></p>
+        </div>
+
+        <!-- Contraseña (solo al crear) -->
+        <div class="form-group" id="password-group">
+          <label class="form-label" for="form-password">Contraseña temporal <span class="required">*</span></label>
+          <input class="form-control" type="password" id="form-password" placeholder="Mínimo 8 caracteres"/>
+          <p class="form-error" id="form-password-error"><span>⚠</span> <span class="err-text"></span></p>
+        </div>
+
+        <p class="form-section-title">Asignación</p>
+
+        <!-- Sucursal -->
+        <div class="form-group">
+          <label class="form-label" for="form-branch">Sucursal</label>
+          <select class="form-control" id="form-branch">
+            <option value="">Sin sucursal asignada</option>
+          </select>
+          <p class="form-error" id="form-branch-error"><span>⚠</span> <span class="err-text"></span></p>
+        </div>
+
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-user').classList.remove('open')">
+        Cancelar
+      </button>
+      <button class="btn btn-primary" id="btn-save-user" onclick="Usuarios.saveUser()">
+        Guardar usuario
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================================================
+    MODAL: CONFIRMAR DESACTIVAR
+    ================================================================ -->
+<div class="modal-overlay" id="modal-deactivate">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h2 class="modal-title" style="color:var(--red)">Desactivar usuario</h2>
+      <button class="modal-close" onclick="document.getElementById('modal-deactivate').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="delete-warning">
+        <div class="delete-warning-icon">⚠️</div>
+        <div>
+          <p style="font-weight:500;color:var(--text-main);margin-bottom:4px">
+            ¿Desactivar a "<span id="deactivate-user-name">este usuario</span>"?
+          </p>
+          <p style="font-size:13px;color:var(--text-sub);line-height:1.5">
+            El usuario no podrá iniciar sesión. Sus registros históricos no se verán afectados.
+          </p>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--gray-text)">Puedes reactivarlo en cualquier momento.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-deactivate').classList.remove('open')">
+        Cancelar
+      </button>
+      <button class="btn btn-danger" id="btn-confirm-deactivate">Sí, desactivar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ================================================================
+    MODAL: LOGOUT CONFIRM
+    ================================================================ -->
+<div class="modal-overlay" id="modal-logout">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <h2 class="modal-title">Cerrar sesión</h2>
+      <button class="modal-close" onclick="document.getElementById('modal-logout').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-sub)">¿Estás seguro de que deseas cerrar tu sesión?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-logout').classList.remove('open')">
+        Cancelar
+      </button>
+      <button class="btn btn-danger" id="confirm-logout">Sí, cerrar sesión</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ====== SCRIPTS ====== -->
+<script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/validaciones.js"></script>
+<script src="../js/usuarios.js"></script>
+<script src="../js/menu.js"></script>
+<script>
+  Auth.guardPage({ allowedRoles: ['ADMIN'] }).then((user) => {
+    if (!user) return;
+    UI.renderNavbarUser();
+      if (window.UserMenu) UserMenu.renderUserDropdown();
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      document.getElementById('modal-logout').classList.add('open');
+    });
+    document.getElementById('confirm-logout').addEventListener('click', async () => {
+      const btn = document.getElementById('confirm-logout');
+      UI.setLoading(btn, true);
+      await Auth.logout();
+    });
+
+    Usuarios.init();
+  });
+</script>
+</body>
+</html>

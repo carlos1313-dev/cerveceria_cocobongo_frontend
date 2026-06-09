@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reportes — Cocobongo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+    .metric-grid   { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .chart-wrap    { position: relative; height: 280px; }
+    .mb-0          { margin-bottom: 0; }
+    .fw-600        { font-weight: 600; }
+    .text-green    { color: #27AE60; }
+    .text-red      { color: #E74C3C; }
+    .filters-note  { font-size: 11px; color: var(--text-sub, #888); margin-top: 8px; }
+  </style>
+</head>
+<body>
+ 
+<div class="app-wrapper">
+  <main class="main-content page-fade">
+ 
+    <div class="page-header">
+      <h1>Reportes del negocio</h1>
+      <p>Indicadores, ventas y comparativo ingresos vs gastos</p>
+    </div>
+ 
+    <!-- ===== Filtros ===== -->
+    <div class="card" style="margin-bottom:20px">
+      <form id="filters-form" class="filters-grid">
+ 
+        <div class="form-group mb-0">
+          <label class="form-label" for="filter-from">Fecha desde</label>
+          <input type="date" class="form-control" id="filter-from" required/>
+        </div>
+ 
+        <div class="form-group mb-0">
+          <label class="form-label" for="filter-to">Fecha hasta</label>
+          <input type="date" class="form-control" id="filter-to" required/>
+        </div>
+ 
+        <div class="form-group mb-0">
+          <label class="form-label" for="filter-branch">Sucursal</label>
+          <select class="form-control" id="filter-branch">
+            <option value="">Todas las sucursales</option>
+          </select>
+        </div>
+ 
+        <!-- period → /reports/sales/by-branch y /reports/period-summary -->
+        <div class="form-group mb-0">
+          <label class="form-label" for="filter-period">Período gráficas</label>
+          <select class="form-control" id="filter-period">
+            <option value="DAILY">Diario</option>
+            <option value="WEEKLY">Semanal</option>
+            <option value="MONTHLY" selected>Mensual</option>
+            <option value="YEARLY">Anual</option>
+          </select>
+        </div>
+ 
+        <div class="form-group mb-0" style="display:flex;align-items:flex-end">
+          <button type="submit" class="btn btn-primary w-100" id="btn-apply-filters">
+            Aplicar filtros
+          </button>
+        </div>
+ 
+      </form>
+      <p class="filters-note">
+        ⚠ La gráfica de ingresos vs gastos requiere seleccionar una sucursal específica.
+      </p>
+    </div>
+ 
+    <!-- ===== Tarjetas resumen — SalesSummaryDTO ===== -->
+    <div class="metric-grid" id="report-summary-cards">
+ 
+      <!-- totalSales -->
+      <div class="card card-accent accent-blue card-loading">
+        <div class="card-metric">
+          <span class="card-metric-label">Total ventas</span>
+          <span class="card-metric-value" id="rep-tx-count">—</span>
+          <span class="card-metric-sub">Transacciones en el período</span>
+        </div>
+      </div>
+ 
+      <!-- grossIncome -->
+      <div class="card card-accent accent-green card-loading">
+        <div class="card-metric">
+          <span class="card-metric-label">Ingresos brutos</span>
+          <span class="card-metric-value" id="rep-income">—</span>
+          <span class="card-metric-sub">Suma de ventas registradas</span>
+        </div>
+      </div>
+ 
+      <!-- estimatedCost -->
+      <div class="card card-accent accent-amber card-loading">
+        <div class="card-metric">
+          <span class="card-metric-label">Costo estimado</span>
+          <span class="card-metric-value" id="rep-cost">—</span>
+          <span class="card-metric-sub">Costo de lo vendido</span>
+        </div>
+      </div>
+ 
+      <!-- gastos (BalanceReport) -->
+      <div class="card card-accent accent-red card-loading">
+        <div class="card-metric">
+          <span class="card-metric-label">Total gastos</span>
+          <span class="card-metric-value" id="rep-expenses">—</span>
+          <span class="card-metric-sub">Requiere sucursal seleccionada</span>
+        </div>
+      </div>
+ 
+      <!-- estimatedProfit -->
+      <div class="card card-accent accent-green card-loading" style="grid-column: 1 / -1">
+        <div class="card-metric">
+          <span class="card-metric-label">Utilidad estimada</span>
+          <span class="card-metric-value text-green" id="rep-profit">—</span>
+          <span class="card-metric-sub">Basada en costo de productos vendidos</span>
+        </div>
+      </div>
+ 
+    </div>
+ 
+    <!-- ===== Top productos — SalesSummaryDTO.topProducts ===== -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header-row">
+        <h2>Top productos vendidos</h2>
+        <span class="badge badge-blue">Top 5</span>
+      </div>
+ 
+      <div class="tbl-wrapper" id="top-products-wrap" style="display:none">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Producto</th>
+              <th class="text-right">Unidades</th>
+              <th class="text-right">Ingresos</th>
+              <th class="text-right">Utilidad est.</th>
+            </tr>
+          </thead>
+          <tbody id="top-products-body"></tbody>
+        </table>
+      </div>
+ 
+      <div class="empty-state" id="top-products-empty">
+        <div class="empty-icon">📦</div>
+        <p>Sin datos de productos para el período.</p>
+      </div>
+    </div>
+ 
+    <!-- ===== Tabla ventas paginada — Page<SaleReportDTO> ===== -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header-row">
+        <h2>Detalle de ventas</h2>
+        <span class="badge badge-gray" id="sales-page-info">—</span>
+      </div>
+ 
+      <div class="section-loading" id="sales-table-loading">
+        <span class="spinner spinner-dark"></span>
+        <span>Cargando ventas...</span>
+      </div>
+ 
+      <div class="tbl-wrapper" id="sales-table-wrap">
+        <table class="tbl" id="sales-report-table" style="display:none">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Sucursal</th>
+              <th class="text-right">Total</th>
+              <th>Método pago</th>
+              <th>Registrado por</th>
+            </tr>
+          </thead>
+          <tbody id="sales-report-body"></tbody>
+        </table>
+      </div>
+ 
+      <div class="empty-state" id="sales-table-empty" style="display:none">
+        <div class="empty-icon">📋</div>
+        <h3>Sin ventas</h3>
+        <p>No hay ventas para el período seleccionado.</p>
+      </div>
+ 
+      <div class="pagination-bar" id="sales-pagination" style="display:none">
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page" disabled>← Anterior</button>
+        <span class="pagination-info" id="pagination-label">Página 1 de 1</span>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page" disabled>Siguiente →</button>
+      </div>
+    </div>
+ 
+    <!-- ===== Gráficas ===== -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;margin-bottom:20px">
+ 
+      <!-- Ingresos vs Gastos — BalanceReport -->
+      <div class="card chart-card">
+        <div class="card-header-row">
+          <h2>Ingresos vs Gastos</h2>
+          <span class="badge badge-gray" id="chart-branch-label">Todas las sucursales</span>
+        </div>
+        <div class="chart-wrap">
+          <div class="section-loading" id="bar-chart-loading">
+            <span class="spinner spinner-dark"></span>
+            <span>Cargando gráfica...</span>
+          </div>
+          <canvas id="income-expense-chart" style="display:none"></canvas>
+        </div>
+      </div>
+ 
+      <!-- Tendencia por período — List<PeriodSummaryDTO> -->
+      <div class="card chart-card">
+        <div class="card-header-row">
+          <h2>Tendencia de ventas</h2>
+          <span class="badge badge-gray" id="period-label-badge">Período</span>
+        </div>
+        <div class="chart-wrap">
+          <div class="section-loading" id="line-chart-loading">
+            <span class="spinner spinner-dark"></span>
+            <span>Cargando gráfica...</span>
+          </div>
+          <canvas id="period-trend-chart" style="display:none"></canvas>
+        </div>
+      </div>
+ 
+    </div>
+ 
+    <!-- Ventas por sucursal — List<BranchSalesReportDTO> -->
+    <div class="card chart-card" id="branch-chart-wrap" style="display:none;margin-bottom:20px">
+      <div class="card-header-row">
+        <h2>Ventas por sucursal</h2>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="branch-sales-chart"></canvas>
+      </div>
+    </div>
+ 
+  </main>
+</div>
+ 
+<script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/layout.js"></script>
+<script src="../js/menu.js"></script>
+<script src="../js/reportes.js"></script>
+<script>
+  Layout.init({ allowedRoles: ['ADMIN'] }).then(ok => {
+    if (ok) Reportes.init();
+  });
+</script>
+ 
+</body>
+</html>

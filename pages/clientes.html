@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clientes — Cocobongo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <style>
+    .skeleton-line {
+      height: 14px; border-radius: 6px;
+      background: linear-gradient(90deg, var(--gray-light) 25%, var(--gray-mid) 50%, var(--gray-light) 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes rowIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+    .row-fade-in { animation: rowIn .3s var(--ease) both; }
+    .num-red { color: var(--red); font-weight: 600; }
+    .num-green { color: var(--green); font-weight: 500; }
+    .search-row {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+      margin-bottom: 16px; padding: 12px 16px;
+      background: var(--white); border-radius: var(--radius-md);
+      border: 1px solid rgba(203,213,225,.6); box-shadow: var(--shadow-xs);
+    }
+    .search-row .search-wrap { flex: 1; min-width: 220px; position: relative; }
+    .search-row .search-icon {
+      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+      color: var(--gray-text); pointer-events: none;
+    }
+    .search-row input { padding-left: 34px; }
+    .metric-card-cli { border-top: 3px solid var(--navy); }
+    .metric-card-cli.debt { border-top-color: var(--red); }
+    #statement-panel { display: none; margin-top: 20px; }
+    .statement-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
+    }
+    .page-fade { opacity: 0; animation: fadeIn .4s var(--ease) .05s both; }
+    @keyframes fadeIn { to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+<div id="toast-container" class="toast-container"></div>
+
+<nav class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">CB</div>
+    <div class="topbar-brand">
+      <span class="topbar-brand-name">Cocobongo</span>
+      <span class="topbar-brand-sub">Sistema de Gestión</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-user" id="topbar-user-chip">
+      <div class="topbar-avatar" id="navbar-avatar">??</div>
+      <div class="topbar-user-info">
+        <div class="topbar-user-name" id="navbar-user-name">Cargando...</div>
+        <span class="topbar-user-role" id="navbar-user-role">—</span>
+      </div>
+    </div>
+    <button class="btn-logout" id="btn-logout">⏏ Salir</button>
+  </div>
+</nav>
+
+<aside class="sidebar">
+  <nav>
+    <p class="sidebar-section-label">Principal</p>
+    <a class="s-item" href="dashboard.html"><span class="s-icon">▦</span> Dashboard</a>
+    <a class="s-item" href="ventas.html"><span class="s-icon">🛒</span> Ventas</a>
+    <p class="sidebar-section-label" style="margin-top:4px">Gestión</p>
+    <a class="s-item" href="inventario.html"><span class="s-icon">📦</span> Inventario</a>
+    <a class="s-item active" href="clientes.html"><span class="s-icon">👥</span> Clientes</a>
+    <a class="s-item" href="gastos.html"><span class="s-icon">💰</span> Gastos</a>
+    <a class="s-item" href="reportes.html"><span class="s-icon">📈</span> Reportes</a>
+    <div class="sidebar-sep"></div>
+    <p class="sidebar-section-label">Administración</p>
+    <a class="s-item" href="usuarios.html"><span class="s-icon">⚙</span> Usuarios</a>
+    <a class="s-item" href="sucursales.html"><span class="s-icon">🏪</span> Sucursales</a>
+  </nav>
+  <div style="margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.07)">
+    <p style="font-size:10px;color:rgba(255,255,255,.25)">v1.0 — Bases de Datos 2026</p>
+  </div>
+</aside>
+
+<div class="app-wrapper">
+  <main class="main-content page-fade">
+
+    <div class="page-header" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1>Clientes y créditos</h1>
+        <p>Ventas a crédito (fiado), saldos pendientes y abonos</p>
+      </div>
+      <button type="button" class="btn btn-primary" id="btn-new-client">+ Nuevo cliente</button>
+    </div>
+
+    <div class="metric-grid-3" style="margin-bottom:20px">
+      <div class="card card-metric metric-card-cli">
+        <span class="card-metric-label">Total clientes</span>
+        <span class="card-metric-value" id="metric-total-clients">—</span>
+      </div>
+      <div class="card card-metric metric-card-cli debt">
+        <span class="card-metric-label">Con saldo pendiente</span>
+        <span class="card-metric-value" id="metric-with-debt" style="color:var(--red)">—</span>
+      </div>
+      <div class="card card-metric metric-card-cli debt">
+        <span class="card-metric-label">Deuda total</span>
+        <span class="card-metric-value" id="metric-total-debt" style="color:var(--red)">—</span>
+      </div>
+    </div>
+
+    <div class="search-row">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="form-control" id="search-clients" placeholder="Buscar por nombre, teléfono o correo..."/>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-sub);cursor:pointer">
+        <input type="checkbox" id="filter-debt"/> Solo con deuda
+      </label>
+    </div>
+
+    <div class="card">
+      <div class="tbl-wrapper table-scroll">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Teléfono</th>
+              <th class="text-right">Saldo pendiente</th>
+              <th>Última compra</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="clients-tbody"></tbody>
+        </table>
+      </div>
+      <div id="clients-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">👥</div>
+        <p>No hay clientes que coincidan con la búsqueda.</p>
+      </div>
+    </div>
+
+    <div class="card" id="statement-panel">
+      <div class="statement-header">
+        <div>
+          <p style="font-size:12px;color:var(--text-sub);margin-bottom:4px">Estado de cuenta</p>
+          <h2 style="font-family:var(--font-display);font-size:20px;color:var(--navy)" id="statement-client-name">—</h2>
+        </div>
+        <div style="text-align:right">
+          <p style="font-size:11px;color:var(--text-sub)">Saldo pendiente</p>
+          <p style="font-size:22px;font-weight:600" id="statement-balance">$0</p>
+        </div>
+      </div>
+      <div class="tbl-wrapper table-scroll" style="margin-bottom:14px">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th class="text-right">Monto</th>
+              <th class="text-right">Saldo resultante</th>
+            </tr>
+          </thead>
+          <tbody id="statement-tbody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-secondary" onclick="Clientes.closeStatement()">Cerrar</button>
+        <button type="button" class="btn btn-primary" id="btn-register-payment" onclick="Clientes.openPaymentModal()">+ Registrar abono</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal nuevo cliente -->
+<div class="modal-overlay" id="modal-client">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modal-client-title">Nuevo cliente</h2>
+      <button type="button" class="modal-close" onclick="document.getElementById('modal-client').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="client-form">
+        <div class="form-group">
+          <label class="form-label" for="form-client-name">Nombre <span class="required">*</span></label>
+          <input class="form-control" id="form-client-name" type="text" placeholder="Nombre completo"/>
+          <p class="form-error" id="form-client-name-error"><span>⚠</span><span class="err-text"></span></p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="form-client-phone">Teléfono</label>
+          <input class="form-control" id="form-client-phone" type="tel" placeholder="300 123 4567"/>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label" for="form-client-email">Correo</label>
+          <input class="form-control" id="form-client-email" type="email" placeholder="correo@ejemplo.com"/>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-client').classList.remove('open')">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="btn-save-client">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal abono -->
+<div class="modal-overlay" id="modal-payment">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h2 class="modal-title">Registrar abono</h2>
+      <button type="button" class="modal-close" onclick="document.getElementById('modal-payment').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-sub);margin-bottom:12px">
+        Cliente: <strong id="payment-client-name"></strong><br/>
+        Saldo actual: <strong id="payment-balance" style="color:var(--red)"></strong>
+      </p>
+      <form id="payment-form">
+        <div class="form-group">
+          <label class="form-label" for="form-payment-amount">Monto del abono <span class="required">*</span></label>
+          <input class="form-control" id="form-payment-amount" type="number" min="1" step="100" placeholder="0"/>
+          <p class="form-error" id="form-payment-amount-error"><span>⚠</span><span class="err-text"></span></p>
+        </div>
+        <div class="form-group mb-0">
+          <label class="form-label" for="form-payment-notes">Observaciones</label>
+          <textarea class="form-control" id="form-payment-notes" rows="2" placeholder="Opcional" style="resize:none"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-payment').classList.remove('open')">Cancelar</button>
+      <button type="button" class="btn btn-success" id="btn-save-payment">Registrar abono</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-logout">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <h2 class="modal-title">Cerrar sesión</h2>
+      <button type="button" class="modal-close" onclick="document.getElementById('modal-logout').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body"><p style="font-size:13px;color:var(--text-sub)">¿Deseas cerrar tu sesión?</p></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-logout').classList.remove('open')">Cancelar</button>
+      <button type="button" class="btn btn-danger" id="confirm-logout">Sí, salir</button>
+    </div>
+  </div>
+</div>
+
+<script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/layout.js"></script>
+
+<script src="../js/validaciones.js"></script>
+<script src="../js/clientes.js"></script>
+<script src="../js/menu.js"></script>
+<script>
+  Auth.guardPage({ allowedRoles: ['ADMIN'] }).then((user) => {
+    if (!user) return;
+    UI.renderNavbarUser();
+    if (window.UserMenu) UserMenu.renderUserDropdown();
+    document.getElementById('btn-logout').addEventListener('click', () => document.getElementById('modal-logout').classList.add('open'));
+    document.getElementById('confirm-logout').addEventListener('click', () => Auth.logout());
+    Clientes.init();
+  });
+</script>
+
+</body>
+</html>

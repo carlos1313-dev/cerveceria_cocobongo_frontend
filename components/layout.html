@@ -1,0 +1,109 @@
+<!-- ============================================================
+     LAYOUT.HTML — Componente base reutilizable
+     Incluir en cada página del sistema (excepto login)
+     ============================================================ -->
+
+<!-- ====== TOPBAR ====== -->
+<nav class="topbar" id="topbar">
+
+  <!-- Logo + nombre -->
+  <div class="topbar-left">
+    <!-- Hamburger (móvil) -->
+    <button class="btn-icon btn-secondary" id="sidebar-toggle"
+            style="border:none;background:rgba(255,255,255,.08);color:#fff;display:none"
+            aria-label="Menú">☰</button>
+
+    <div class="topbar-logo">CB</div>
+
+    <div class="topbar-brand">
+      <span class="topbar-brand-name">Cocobongo</span>
+      <span class="topbar-brand-sub">Sistema de Gestión</span>
+    </div>
+  </div>
+
+  <!-- Derecha: notif + usuario + logout -->
+  <div class="topbar-right">
+
+    <!-- Notificaciones de stock bajo -->
+    <div class="topbar-notif" id="notif-btn" title="Notificaciones">
+      🔔
+      <span class="notif-dot" id="notif-dot" style="display:none"></span>
+    </div>
+
+    <!-- User chip -->
+    <div class="topbar-user" id="topbar-user-chip">
+      <div class="topbar-avatar" id="navbar-avatar">??</div>
+      <div class="topbar-user-info">
+        <div class="topbar-user-name" id="navbar-user-name">Cargando...</div>
+        <span class="topbar-user-role" id="navbar-user-role">—</span>
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <button class="btn-logout" id="btn-logout">
+      <span>⏏</span> Salir
+    </button>
+
+  </div>
+</nav>
+
+<!-- ====== SIDEBAR ====== -->
+<aside class="sidebar" id="sidebar">
+
+  <nav>
+
+    <!-- GENERAL -->
+    <p class="sidebar-section-label">Principal</p>
+
+    <a class="s-item" href="dashboard.html" data-page="dashboard.html" data-roles="ADMIN,EMPLOYEE">
+      <span class="s-icon">▦</span> Dashboard
+    </a>
+
+    <a class="s-item" href="ventas.html" data-page="ventas.html" data-roles="ADMIN,EMPLOYEE">
+      <span class="s-icon">🛒</span> Ventas
+      <!-- Badge dinámico si hay ventas pendientes -->
+    </a>
+
+    <!-- ADMIN ONLY -->
+    <div class="sidebar-section-label s-section" data-roles="ADMIN" style="margin-top:4px">Gestión</div>
+
+    <a class="s-item" href="inventario.html" data-page="inventario.html" data-roles="ADMIN">
+      <span class="s-icon">📦</span> Inventario
+      <span class="s-badge" id="badge-stock" style="display:none">!</span>
+    </a>
+
+    <a class="s-item" href="clientes.html" data-page="clientes.html" data-roles="ADMIN">
+      <span class="s-icon">👥</span> Clientes
+    </a>
+
+    <a class="s-item" href="gastos.html" data-page="gastos.html" data-roles="ADMIN">
+      <span class="s-icon">💰</span> Gastos
+    </a>
+
+    <a class="s-item" href="reportes.html" data-page="reportes.html" data-roles="ADMIN">
+      <span class="s-icon">📈</span> Reportes
+    </a>
+
+    <div class="sidebar-sep s-section" data-roles="ADMIN"></div>
+
+    <p class="sidebar-section-label s-section" data-roles="ADMIN">Administración</p>
+
+    <a class="s-item" href="usuarios.html" data-page="usuarios.html" data-roles="ADMIN">
+      <span class="s-icon">⚙</span> Usuarios
+    </a>
+
+    <a class="s-item" href="sucursales.html" data-page="sucursales.html" data-roles="ADMIN">
+      <span class="s-icon">🏪</span> Sucursales
+    </a>
+
+  </nav>
+
+  <!-- Footer del sidebar -->
+  <div style="margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.07)">
+    <p style="font-size:10px;color:rgba(255,255,255,.25);line-height:1.5">
+      v1.0 — Bases de Datos 2026<br/>
+      <span style="opacity:.6">Sec. 020-83/85</span>
+    </p>
+  </div>
+
+</aside>

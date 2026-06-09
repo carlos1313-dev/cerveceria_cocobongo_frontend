@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro — Cocobongo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      background: var(--navy-deeper);
+    }
+
+    .login-panel-left {
+      flex: 1;
+      position: relative;
+      background: linear-gradient(150deg, var(--navy-deeper) 0%, var(--navy-dark) 40%, var(--blue-mid) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 48px;
+      overflow: hidden;
+    }
+
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: .18;
+      animation: orb-drift 10s ease-in-out infinite alternate;
+    }
+    .bg-orb-1 { width: 400px; height: 400px; background: var(--blue-mid); top: -80px; left: -80px; }
+    .bg-orb-2 { width: 300px; height: 300px; background: var(--blue-light); bottom: 60px; right: -60px; animation-delay: -3s; }
+
+    @keyframes orb-drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(213,232,240,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(213,232,240,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .panel-left-content { position: relative; z-index: 1; text-align: center; max-width: 420px; }
+
+    .panel-logo {
+      width: 80px; height: 80px;
+      background: rgba(255,255,255,.1);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 28px;
+      font-family: var(--font-display);
+      font-size: 28px; font-weight: 700; color: #fff;
+    }
+
+    .panel-headline {
+      font-family: var(--font-display);
+      font-size: 32px; font-weight: 600; color: #fff;
+      line-height: 1.2; margin-bottom: 16px;
+    }
+    .panel-headline span { display: block; color: var(--blue-light); }
+
+    .panel-desc {
+      color: rgba(255,255,255,.55);
+      font-size: 14px; line-height: 1.7; font-weight: 300;
+    }
+
+    .panel-note {
+      margin-top: 28px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      font-size: 12px;
+      color: rgba(255,255,255,.65);
+      line-height: 1.6;
+      text-align: left;
+    }
+
+    .panel-tag {
+      position: absolute; bottom: 28px; left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,.25);
+      font-size: 11px;
+    }
+
+    .login-panel-right {
+      width: 480px; min-width: 480px;
+      background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      padding: 48px 52px;
+      position: relative;
+    }
+
+    .login-form-wrap { width: 100%; max-width: 360px; position: relative; }
+
+    .login-greeting { margin-bottom: 24px; }
+    .login-greeting-eyebrow {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--blue-mid); margin-bottom: 8px;
+    }
+    .login-greeting h1 {
+      font-family: var(--font-display);
+      font-size: 26px; font-weight: 600; color: var(--navy);
+    }
+    .login-greeting p { color: var(--text-sub); font-size: 14px; margin-top: 6px; }
+
+    .login-form .form-group { margin-bottom: 16px; }
+
+    #register-alert { display: none; }
+    #register-alert.visible { display: flex; }
+
+    .auth-switch {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+    .auth-switch a {
+      color: var(--blue-mid);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .auth-switch a:hover { color: var(--navy); text-decoration: underline; }
+
+    .form-hint {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .login-panel-left { display: none; }
+      .login-panel-right { width: 100%; min-width: unset; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container" class="toast-container"></div>
+
+<div class="login-panel-left">
+  <div class="bg-grid"></div>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <div class="panel-left-content">
+    <div class="panel-logo">BC</div>
+    <h1 class="panel-headline">
+      Configuración
+      <span>inicial</span>
+    </h1>
+    <p class="panel-desc">
+      Crea la cuenta del administrador principal del sistema.
+      Solo está disponible mientras no exista un administrador activo.
+      Debes tener al menos una sucursal creada en la BD (tabla <strong>branch</strong>).
+    </p>
+    <div class="panel-note">
+      <strong>RF-SEG-01</strong> — El registro crea un usuario con rol <strong>ADMIN</strong>.
+      Los empleados los gestiona el administrador desde el módulo de usuarios.
+    </div>
+  </div>
+
+  <p class="panel-tag">Universidad Distrital · Bases de Datos · 2026</p>
+</div>
+
+<div class="login-panel-right">
+  <div class="login-form-wrap">
+
+    <div class="login-greeting">
+      <p class="login-greeting-eyebrow">Primera configuración</p>
+      <h1>Crear administrador</h1>
+      <p>Completa los datos para activar el sistema</p>
+    </div>
+
+    <div class="alert alert-danger" id="register-alert">
+      <span class="alert-icon">⚠</span>
+      <span id="register-alert-msg"></span>
+    </div>
+
+    <form class="login-form" id="register-form" novalidate autocomplete="off">
+
+      <div class="form-group">
+        <label class="form-label" for="name">
+          Nombre completo <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input
+            class="form-control"
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Ej. Juan Pérez"
+            autocomplete="name"
+          />
+        </div>
+        <p class="form-error" id="name-error"><span>⚠</span></p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">
+          Correo electrónico <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉</span>
+          <input
+            class="form-control"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="admin@correo.com"
+            autocomplete="username"
+            spellcheck="false"
+          />
+        </div>
+        <p class="form-error" id="email-error"><span>⚠</span></p>
+      </div>
+
+      <div class="form-group" id="branch-group">
+        <label class="form-label" for="branch-id">
+          Sucursal <span class="required">*</span>
+        </label>
+
+        <div id="branch-select-wrap">
+          <div class="input-wrapper">
+            <span class="input-icon">🏪</span>
+            <select class="form-control" id="branch-id" name="branchId">
+              <option value="">Cargando sucursales...</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="branch-manual-wrap" style="display:none">
+          <div class="input-wrapper">
+            <span class="input-icon">#</span>
+            <input
+              class="form-control"
+              type="number"
+              id="branch-id-manual"
+              name="branchIdManual"
+              min="1"
+              step="1"
+              placeholder="Ej. 1"
+              disabled
+            />
+          </div>
+        </div>
+
+        <p class="form-hint" id="branch-name-hint"></p>
+        <p class="form-error" id="branch-id-error"><span>⚠</span></p>
+        <p class="form-error" id="branch-id-manual-error"><span>⚠</span></p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">
+          Contraseña <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input
+            class="form-control"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Mínimo 8 caracteres"
+            autocomplete="new-password"
+          />
+          <span class="input-action" id="toggle-pass" title="Mostrar contraseña">👁</span>
+        </div>
+        <p class="form-error" id="password-error"><span>⚠</span></p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password-confirm">
+          Confirmar contraseña <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input
+            class="form-control"
+            type="password"
+            id="password-confirm"
+            name="passwordConfirm"
+            placeholder="Repite la contraseña"
+            autocomplete="new-password"
+          />
+          <span class="input-action" id="toggle-pass-confirm" title="Mostrar contraseña">👁</span>
+        </div>
+        <p class="form-error" id="password-confirm-error"><span>⚠</span></p>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block" id="btn-submit">
+        Crear cuenta de administrador
+      </button>
+
+    </form>
+
+    <p class="auth-switch">
+      ¿Ya tienes cuenta?
+      <a href="login.html">Iniciar sesión</a>
+    </p>
+
+  </div>
+</div>
+
+<script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/validaciones.js"></script>
+<script src="../js/models/RegisterRequest.js"></script>
+<script src="../js/register.js"></script>
+</body>
+</html>

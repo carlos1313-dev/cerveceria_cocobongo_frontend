@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — Cocobongo</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+
+  <style>
+    /* Estilos específicos para el mensaje de bienvenida */
+    .welcome-message {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .welcome-card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--card-bg, #ffffff);
+      border-radius: 24px;
+      padding: 3rem 2rem;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border, #e9ecef);
+    }
+
+    .welcome-icon {
+      font-size: 64px;
+      margin-bottom: 1.5rem;
+    }
+
+    .welcome-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text-primary, #1a2c3e);
+      font-family: 'Playfair Display', serif;
+    }
+
+    .welcome-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-sub, #6c757d);
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    .quick-links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .quick-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--blue, #2c5f8a);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .quick-link:hover {
+      background: var(--blue-dark, #1e4668);
+      transform: translateY(-2px);
+    }
+
+    .quick-link-secondary {
+      background: var(--gray-200, #e9ecef);
+      color: var(--text-primary, #1a2c3e);
+    }
+
+    .quick-link-secondary:hover {
+      background: var(--gray-300, #dee2e6);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app-wrapper">
+  <main class="main-content">
+
+    <!-- Mensaje de bienvenida centrado -->
+    <div class="welcome-message">
+      <div class="welcome-card">
+        <div class="welcome-icon">
+          🍺
+        </div>
+        <h1 class="welcome-title">
+          ¡Bienvenido a Cocobongo!
+        </h1>
+        <p class="welcome-subtitle">
+          Sistema de gestión cervecera<br>
+          Selecciona una opción del menú para comenzar
+        </p>
+        
+        <div class="quick-links">
+          <a href="ventas.html" class="quick-link">
+            🛒 Nueva venta
+          </a>
+          <a href="inventario.html" class="quick-link quick-link-secondary">
+            📦 Inventario
+          </a>
+          <a href="reportes.html" class="quick-link quick-link-secondary">
+            📊 Reportes
+          </a>
+          <a href="clientes.html" class="quick-link quick-link-secondary">
+            👥 Clientes
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';
+</script>
+
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/layout.js"></script>
+<script src="../js/menu.js"></script>
+<!-- NOTA: Ya no se carga dashboard.js porque no hay funcionalidad que inicializar -->
+<script>
+  // Inicializar solo el layout y el menú, sin cargar datos del dashboard
+  Layout.init({ allowedRoles: ['ADMIN'] }).then((ok) => {
+    if (ok) {
+      // Dashboard ya no tiene init, solo mostramos el mensaje
+      console.log('Dashboard cargado - modo bienvenida');
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,860 @@
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Inventario — Cocobongo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="../css/global.css"/>
+    <style>
+      /* ============================================================
+        INVENTARIO — Estilos específicos
+        ============================================================ */
+  
+      /* ---- Skeleton loader ---- */
+      .skeleton-line {
+        height: 14px;
+        border-radius: 6px;
+        background: linear-gradient(90deg, var(--gray-light) 25%, var(--gray-mid) 50%, var(--gray-light) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.4s infinite;
+      }
+      @keyframes shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+  
+      /* ---- Row animation ---- */
+      @keyframes rowIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: none; }
+      }
+      .row-fade-in {
+        animation: rowIn .3s var(--ease) both;
+      }
+  
+      /* ---- Product code chip ---- */
+      code.product-code {
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        background: var(--gray-light);
+        color: var(--blue-mid);
+        padding: 2px 7px;
+        border-radius: 4px;
+        border: 1px solid var(--gray-mid);
+        letter-spacing: .03em;
+      }
+  
+      /* ---- Stock display ---- */
+      .stock-display {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      .stock-num {
+        font-family: 'Playfair Display', serif;
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 1;
+      }
+      .num-green { color: var(--green); }
+      .num-amber { color: var(--amber); }
+      .num-red   { color: var(--red);   }
+  
+      .stock-min-label {
+        font-size: 10px;
+        color: var(--gray-text);
+      }
+  
+      .stock-bar-wrap {
+        width: 100%;
+        height: 3px;
+        background: var(--gray-light);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 2px;
+      }
+  
+      .stock-bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width .6s var(--ease);
+      }
+  
+      /* ---- Row actions ---- */
+      .row-actions {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        opacity: 0;
+        transition: opacity .15s;
+      }
+      tr:hover .row-actions { opacity: 1; }
+  
+      /* ---- Mono numbers ---- */
+      .mono { font-family: 'Courier New', monospace; font-size: 12px; }
+  
+      /* ---- Empty state ---- */
+      .empty-state {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 24px;
+        gap: 12px;
+        text-align: center;
+      }
+      .empty-icon {
+        font-size: 48px;
+        opacity: .3;
+      }
+      .empty-state h3 {
+        font-family: var(--font-display);
+        font-size: 18px;
+        color: var(--text-sub);
+      }
+      .empty-state p {
+        font-size: 13px;
+        color: var(--gray-text);
+      }
+  
+      /* ---- Field disabled state ---- */
+      .field-disabled {
+        opacity: .45;
+        pointer-events: none;
+      }
+  
+      /* ---- Modal tabs (crear producto: sección precio) ---- */
+      .form-section-title {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--blue-mid);
+        padding: 14px 0 6px;
+        border-top: 1px dashed var(--gray-mid);
+        margin-top: 4px;
+      }
+  
+      /* ---- Nota tipo producto ---- */
+      .field-nota {
+        display: none;
+        font-size: 11px;
+        color: var(--blue-mid);
+        background: var(--blue-pale);
+        padding: 6px 10px;
+        border-radius: var(--radius-sm);
+        margin-top: 4px;
+        border-left: 3px solid var(--blue-mid);
+      }
+  
+      /* ---- Entrada modal stock preview ---- */
+      .entrada-preview {
+        background: var(--off-white);
+        border: 1px solid var(--gray-mid);
+        border-radius: var(--radius-md);
+        padding: 14px 16px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+  
+      .entrada-preview-name {
+        font-weight: 500;
+        color: var(--text-main);
+        font-size: 14px;
+      }
+  
+      .entrada-preview-stock {
+        text-align: right;
+      }
+  
+      .entrada-preview-stock .lbl {
+        font-size: 10px;
+        color: var(--gray-text);
+        text-transform: uppercase;
+        letter-spacing: .05em;
+      }
+  
+      .entrada-preview-stock .val {
+        font-family: var(--font-display);
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--navy);
+      }
+  
+      /* ---- Metric cards hover ---- */
+      .metric-card-inv {
+        border-top: 3px solid var(--navy);
+        cursor: default;
+        transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+      }
+      .metric-card-inv:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+      }
+      .metric-card-inv.red-border   { border-top-color: var(--red);   }
+      .metric-card-inv.amber-border { border-top-color: var(--amber); }
+      .metric-card-inv.green-border { border-top-color: var(--green); }
+  
+      /* ---- Filter row ---- */
+      .filter-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+        background: var(--white);
+        padding: 12px 16px;
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(203,213,225,.6);
+        box-shadow: var(--shadow-xs);
+      }
+  
+      .filter-row .form-control,
+      .filter-row select {
+        font-size: 13px;
+      }
+  
+      .search-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 220px;
+      }
+  
+      .search-wrap .search-icon {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-text);
+        pointer-events: none;
+        font-size: 14px;
+      }
+  
+      .search-wrap input {
+        padding-left: 34px;
+      }
+  
+      /* ---- Table wrapper scrollable ---- */
+      .table-scroll {
+        overflow-x: auto;
+      }
+  
+      /* ---- Delete modal warning ---- */
+      .delete-warning {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px;
+        background: var(--red-bg);
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(231,76,60,.2);
+        margin-bottom: 12px;
+      }
+  
+      .delete-warning-icon {
+        font-size: 28px;
+        flex-shrink: 0;
+      }
+  
+      /* ---- Form grid ---- */
+      .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 14px;
+      }
+  
+      .form-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0 12px;
+      }
+  
+      /* ---- Page fade-in ---- */
+      .page-fade {
+        opacity: 0;
+        animation: fadeIn .4s var(--ease) .05s both;
+      }
+      @keyframes fadeIn {
+        to { opacity: 1; }
+      }
+  
+      /* Responsive */
+      @media (max-width: 900px) {
+        .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+        .metric-grid-3 { grid-template-columns: 1fr 1fr; }
+        .filter-row { flex-direction: column; align-items: stretch; }
+        .search-wrap { min-width: unset; }
+      }
+    </style>
+  </head>
+  <body>
+  
+  <!-- ====== TOASTS ====== -->
+  <div id="toast-container" class="toast-container"></div>
+  
+  <!-- ====== TOPBAR ====== -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">CB</div>
+      <div class="topbar-brand">
+        <span class="topbar-brand-name">Cocobongo</span>
+        <span class="topbar-brand-sub">Sistema de Gestión</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-notif" title="Notificaciones">
+        🔔<span class="notif-dot" id="notif-dot" style="display:none"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-avatar" id="navbar-avatar">??</div>
+        <div class="topbar-user-info">
+          <div class="topbar-user-name" id="navbar-user-name">Cargando...</div>
+          <span class="topbar-user-role" id="navbar-user-role">—</span>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">⏏ Salir</button>
+    </div>
+  </nav>
+  
+  <!-- ====== SIDEBAR ====== -->
+  <aside class="sidebar">
+    <nav>
+      <p class="sidebar-section-label">Principal</p>
+      <a class="s-item" href="dashboard.html"><span class="s-icon">▦</span> Dashboard</a>
+      <a class="s-item" href="ventas.html"><span class="s-icon">🛒</span> Ventas</a>
+  
+      <p class="sidebar-section-label" style="margin-top:4px">Gestión</p>
+      <a class="s-item active" href="inventario.html">
+        <span class="s-icon">📦</span> Inventario
+        <span class="s-badge" id="badge-stock" style="display:none">!</span>
+      </a>
+      <a class="s-item" href="clientes.html"><span class="s-icon">👥</span> Clientes</a>
+      <a class="s-item" href="gastos.html"><span class="s-icon">💰</span> Gastos</a>
+      <a class="s-item" href="reportes.html"><span class="s-icon">📈</span> Reportes</a>
+  
+      <div class="sidebar-sep"></div>
+      <p class="sidebar-section-label">Administración</p>
+      <a class="s-item" href="usuarios.html"><span class="s-icon">⚙</span> Usuarios</a>
+      <a class="s-item" href="sucursales.html"><span class="s-icon">🏪</span> Sucursales</a>
+    </nav>
+    <div style="margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.07)">
+      <p style="font-size:10px;color:rgba(255,255,255,.25);line-height:1.5">v1.0 — Bases de Datos 2026</p>
+    </div>
+  </aside>
+  
+  <!-- ====== MAIN CONTENT ====== -->
+  <div class="app-wrapper">
+    <main class="main-content page-fade">
+  
+      <!-- Page header -->
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1>Inventario</h1>
+          <p>Gestión de productos, stock por sucursal y entradas de mercancía</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="Inventario.reload()" title="Recargar">
+            ↻ Actualizar
+          </button>
+          <button class="btn btn-secondary" onclick="Inventario.openProveedores()">
+            🏭 Proveedores
+          </button>
+          <button class="btn btn-primary" onclick="Inventario.openCreate()">
+            + Nuevo producto
+          </button>
+        </div>
+      </div>
+  
+      <!-- Alert stock bajo -->
+      <div class="alert alert-warning" id="stock-global-alert" style="display:none">
+        <span class="alert-icon">⚠</span>
+        <span>
+          <strong id="stock-alert-count">0 productos</strong> tienen stock por debajo del mínimo establecido.
+          <a href="#" onclick="document.getElementById('filter-stock').value='low';document.getElementById('filter-stock').dispatchEvent(new Event('change'));return false;"
+            style="color:inherit;font-weight:600;margin-left:6px;">Filtrar →</a>
+        </span>
+      </div>
+  
+      <!-- Metric cards -->
+      <div class="metric-grid-3" style="margin-bottom:20px">
+        <div class="card card-metric metric-card-inv">
+          <span class="card-metric-label">Total productos</span>
+          <span class="card-metric-value" id="metric-total">—</span>
+          <span class="card-metric-sub">en el sistema</span>
+        </div>
+        <div class="card card-metric metric-card-inv amber-border">
+          <span class="card-metric-label">Stock bajo</span>
+          <span class="card-metric-value" id="metric-low" style="color:var(--amber)">—</span>
+          <span class="card-metric-sub">requieren reposición</span>
+        </div>
+        <div class="card card-metric metric-card-inv red-border">
+          <span class="card-metric-label">Sin stock</span>
+          <span class="card-metric-value" id="metric-empty" style="color:var(--red)">—</span>
+          <span class="card-metric-sub">productos agotados</span>
+        </div>
+      </div>
+  
+      <!-- Filter row -->
+      <div class="filter-row">
+        <!-- Search -->
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input
+            class="form-control"
+            type="text"
+            id="search-input"
+            placeholder="Buscar por nombre, código o proveedor..."
+            autocomplete="off"
+          />
+        </div>
+  
+        <!-- Sucursal -->
+        <select class="form-control" id="filter-sucursal" style="width:180px">
+          <option value="">Todas las sucursales</option>
+        </select>
+  
+        <!-- Estado stock -->
+        <select class="form-control" id="filter-stock" style="width:165px">
+          <option value="">Todos los estados</option>
+          <option value="ok">✓ Stock suficiente</option>
+          <option value="low">⚠ Stock bajo</option>
+          <option value="empty">✕ Sin stock</option>
+        </select>
+  
+        <!-- Limpiar -->
+        <button class="btn btn-secondary btn-sm" id="btn-clear-filters" title="Limpiar filtros">
+          ✕ Limpiar
+        </button>
+  
+        <!-- Contador -->
+        <span style="margin-left:auto;font-size:12px;color:var(--gray-text);white-space:nowrap">
+          <span id="count-label">cargando...</span>
+        </span>
+      </div>
+  
+      <!-- Tabla -->
+      <div class="tbl-wrapper">
+        <div class="table-scroll">
+          <table class="tbl" id="products-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Proveedor</th>
+                <th class="text-right">Costo</th>
+                <th class="text-right">Precio venta</th>
+                <th>Stock</th>
+                <th>Sucursal</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="products-tbody">
+              <!-- Skeleton inicial -->
+              <tr><td colspan="10"><div class="skeleton-line"></div></td></tr>
+            </tbody>
+          </table>
+  
+          <!-- Empty state -->
+          <div class="empty-state" id="empty-state">
+            <div class="empty-icon">📦</div>
+            <h3>Sin productos</h3>
+            <p>No hay productos que coincidan con los filtros aplicados.</p>
+            <button class="btn btn-primary" onclick="Inventario.openCreate()">
+              + Crear primer producto
+            </button>
+          </div>
+        </div>
+      </div>
+  
+    </main>
+  </div>
+  
+  
+  <!-- ================================================================
+      MODAL: CREAR / EDITAR PRODUCTO
+      ================================================================ -->
+  <div class="modal-overlay" id="modal-product">
+    <div class="modal" style="max-width:580px">
+  
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-product-title">Nuevo producto</h2>
+        <button class="modal-close" onclick="document.getElementById('modal-product').classList.remove('open')">✕</button>
+      </div>
+  
+      <div class="modal-body">
+        <form id="product-form" novalidate autocomplete="off">
+  
+          <!-- Nombre -->
+          <div class="form-group">
+            <label class="form-label" for="form-name">Nombre del producto <span class="required">*</span></label>
+            <input class="form-control" type="text" id="form-name"
+                  placeholder="Ej. Club Colombia 330ml"/>
+            <p class="form-error" id="form-name-error"><span>⚠</span> <span class="err-text"></span></p>
+          </div>
+  
+          <!-- Descripción -->
+          <div class="form-group">
+            <label class="form-label" for="form-description">Descripción</label>
+            <input class="form-control" type="text" id="form-description"
+                  placeholder="Descripción opcional del producto"/>
+          </div>
+  
+          <!-- Tipo + Proveedor -->
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="form-type">Tipo de producto <span class="required">*</span></label>
+              <select class="form-control" id="form-type">
+                <option value="RESALE">Reventa (comprado para vender)</option>
+                <option value="SUPPLY">Insumo (materia prima)</option>
+                <option value="MADE">Elaborado (producción propia)</option>
+              </select>
+            </div>
+            <div class="form-group" id="proveedor-wrap">
+              <label class="form-label" for="form-proveedor">Proveedor <span class="required">*</span></label>
+              <select class="form-control" id="form-proveedor">
+                <option value="">Selecciona proveedor</option>
+              </select>
+              <p class="form-error" id="form-proveedor-error"><span>⚠</span> <span class="err-text"></span></p>
+              <p class="field-nota" id="proveedor-nota">Los productos elaborados no requieren proveedor externo.</p>
+            </div>
+          </div>
+  
+          <!-- Precios -->
+          <p class="form-section-title">Precios</p>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="form-cost">Precio de compra / costo <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon" style="font-style:normal;font-size:12px;font-weight:600">$</span>
+                <input class="form-control" type="number" id="form-cost" min="0" step="100"
+                      placeholder="0"/>
+              </div>
+              <p class="form-error" id="form-cost-error"><span>⚠</span> <span class="err-text"></span></p>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="form-price">Precio de venta al público <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon" style="font-style:normal;font-size:12px;font-weight:600">$</span>
+                <input class="form-control" type="number" id="form-price" min="0" step="100"
+                      placeholder="0"/>
+              </div>
+              <p class="form-error" id="form-price-error"><span>⚠</span> <span class="err-text"></span></p>
+            </div>
+          </div>
+  
+          <!-- Sucursal + Stock mínimo -->
+          <p class="form-section-title">Ubicación y stock</p>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="form-sucursal">Sucursal <span class="required">*</span></label>
+              <select class="form-control" id="form-sucursal">
+                <option value="">Selecciona sucursal</option>
+              </select>
+              <p class="form-error" id="form-sucursal-error"><span>⚠</span> <span class="err-text"></span></p>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="form-min-stock">
+                Stock mínimo
+                <span style="font-weight:300;font-size:10px;color:var(--gray-text)">&nbsp;(alerta automática)</span>
+              </label>
+              <input class="form-control" type="number" id="form-min-stock" min="0" value="0"
+                    placeholder="0"/>
+            </div>
+          </div>
+  
+        </form>
+      </div>
+  
+      <div class="modal-footer">
+        <button class="btn btn-secondary"
+                onclick="document.getElementById('modal-product').classList.remove('open')">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" id="btn-save-product"
+                onclick="Inventario.saveProduct()">
+          Guardar producto
+        </button>
+      </div>
+  
+    </div>
+  </div>
+  
+  
+  <!-- ================================================================
+      MODAL: ENTRADA DE INVENTARIO
+      ================================================================ -->
+  <div class="modal-overlay" id="modal-entrada">
+    <div class="modal" style="max-width:460px">
+  
+      <div class="modal-header">
+        <h2 class="modal-title">Entrada de inventario</h2>
+        <button class="modal-close"
+                onclick="document.getElementById('modal-entrada').classList.remove('open')">✕</button>
+      </div>
+  
+      <div class="modal-body">
+  
+        <!-- Preview producto -->
+        <div class="entrada-preview">
+          <div>
+            <p style="font-size:10px;color:var(--gray-text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">Producto</p>
+            <p class="entrada-preview-name" id="entrada-producto-nombre">—</p>
+          </div>
+          <div class="entrada-preview-stock">
+            <p class="lbl">Stock actual</p>
+            <p class="val" id="entrada-stock-actual">—</p>
+          </div>
+        </div>
+  
+        <form id="entrada-form" novalidate autocomplete="off">
+  
+          <!-- Cantidad -->
+          <div class="form-group">
+            <label class="form-label" for="entrada-cantidad">Cantidad a ingresar <span class="required">*</span></label>
+            <input class="form-control" type="number" id="entrada-cantidad"
+                  min="1" placeholder="Ej. 24"/>
+            <p class="form-error" id="entrada-cantidad-error"><span>⚠</span> <span class="err-text"></span></p>
+          </div>
+  
+          <!-- Sucursal -->
+          <div class="form-group">
+            <label class="form-label" for="entrada-sucursal">Sucursal de destino <span class="required">*</span></label>
+            <select class="form-control" id="entrada-sucursal">
+              <option value="">Selecciona sucursal</option>
+            </select>
+            <p class="form-error" id="entrada-sucursal-error"><span>⚠</span> <span class="err-text"></span></p>
+          </div>
+  
+          <!-- Razón -->
+          <div class="form-group">
+            <label class="form-label" for="entrada-razon">Razón del movimiento</label>
+            <select class="form-control" id="entrada-razon">
+              <option value="PURCHASE">Compra a proveedor</option>
+              <option value="ADJUSTMENT">Ajuste manual de inventario</option>
+            </select>
+          </div>
+  
+  
+        </form>
+      </div>
+  
+      <div class="modal-footer">
+        <button class="btn btn-secondary"
+                onclick="document.getElementById('modal-entrada').classList.remove('open')">
+          Cancelar
+        </button>
+        <button class="btn btn-success" id="btn-save-entrada"
+                onclick="Inventario.saveEntrada()">
+          ✓ Registrar entrada
+        </button>
+      </div>
+  
+    </div>
+  </div>
+  
+  
+  <!-- ================================================================
+      MODAL: CONFIRMAR ELIMINACIÓN
+      ================================================================ -->
+  <div class="modal-overlay" id="modal-delete">
+    <div class="modal" style="max-width:420px">
+  
+      <div class="modal-header">
+        <h2 class="modal-title" style="color:var(--red)">Desactivar producto</h2>
+        <button class="modal-close"
+                onclick="document.getElementById('modal-delete').classList.remove('open')">✕</button>
+      </div>
+  
+      <div class="modal-body">
+        <div class="delete-warning">
+          <div class="delete-warning-icon">⚠️</div>
+          <div>
+            <p style="font-weight:500;color:var(--text-main);margin-bottom:4px">
+              ¿Desactivar "<span id="delete-product-name">este producto</span>"?
+            </p>
+            <p style="font-size:13px;color:var(--text-sub);line-height:1.5">
+              El producto quedará inactivo y no aparecerá en nuevas ventas.
+              El historial de ventas existente no se verá afectado.
+            </p>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--gray-text)">
+          Esta acción puede revertirse contactando al administrador del sistema.
+        </p>
+      </div>
+  
+      <div class="modal-footer">
+        <button class="btn btn-secondary"
+                onclick="document.getElementById('modal-delete').classList.remove('open')">
+          Cancelar
+        </button>
+        <button class="btn btn-danger" id="btn-confirm-delete">
+          Sí, desactivar producto
+        </button>
+      </div>
+  
+    </div>
+  </div>
+  <!-- ================================================================
+      MODAL: GESTIÓN DE PROVEEDORES
+      ================================================================ -->
+  <div class="modal-overlay" id="modal-proveedores">
+    <div class="modal" style="max-width:700px">
+      <div class="modal-header">
+        <h2 class="modal-title">Proveedores</h2>
+        <button class="modal-close" onclick="closeProveedoresModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Botón para crear nuevo proveedor -->
+        <div style="display:flex; justify-content:flex-end; margin-bottom:16px">
+          <button class="btn btn-primary btn-sm" onclick="Inventario.openCreateProvider()">
+            + Nuevo proveedor
+          </button>
+        </div>
+        
+        <!-- Tabla de proveedores -->
+        <div class="table-scroll">
+          <table class="tbl" id="providers-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Email</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="providers-tbody">
+              <tr><td colspan="6"><div class="skeleton-line"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeProveedoresModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================================
+      MODAL: CREAR/EDITAR PROVEEDOR
+      ================================================================ -->
+  <div class="modal-overlay" id="modal-proveedor-form">
+    <div class="modal" style="max-width:450px">
+      <div class="modal-header">
+        <h2 class="modal-title" id="proveedor-modal-title">Nuevo proveedor</h2>
+        <button class="modal-close" onclick="closeProveedorFormModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="proveedor-form" novalidate>
+          <div class="form-group">
+            <label class="form-label">Nombre <span class="required">*</span></label>
+            <input class="form-control" type="text" id="prov-name" placeholder="Nombre del proveedor"/>
+            <p class="form-error" id="prov-name-error"><span>⚠</span> <span class="err-text"></span></p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input class="form-control" type="text" id="prov-telephone" placeholder="Ej. 6011234567"/>
+            <p class="form-error" id="prov-telephone-error"><span>⚠</span> <span class="err-text"></span></p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-control" type="email" id="prov-email" placeholder="proveedor@email.com"/>
+            <p class="form-error" id="prov-email-error"><span>⚠</span> <span class="err-text"></span></p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dirección</label>
+            <input class="form-control" type="text" id="prov-address" placeholder="Dirección opcional"/>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeProveedorFormModal()">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-provider" onclick="Inventario.saveProvider()">Guardar</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ================================================================
+      MODAL: LOGOUT CONFIRM
+      ================================================================ -->
+  <div class="modal-overlay" id="modal-logout">
+    <div class="modal" style="max-width:380px">
+      <div class="modal-header">
+        <h2 class="modal-title">Cerrar sesión</h2>
+        <button class="modal-close"
+                onclick="document.getElementById('modal-logout').classList.remove('open')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text-sub)">¿Estás seguro de que deseas cerrar tu sesión?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary"
+                onclick="document.getElementById('modal-logout').classList.remove('open')">
+          Cancelar
+        </button>
+        <button class="btn btn-danger" id="confirm-logout">Sí, cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+  
+  
+  <!-- ====== SCRIPTS ====== -->
+  <!-- Origen del API Spring Boot (puerto 8082 en dev). Quitar o dejar '' si sirves el front desde el mismo host. -->
+  <script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  
+  <script src="../js/validaciones.js"></script>
+  <script src="../js/inventario.js"></script>
+  <script src="../js/menu.js"></script>
+  <script>
+    Auth.guardPage({ allowedRoles: ['ADMIN'] }).then((user) => {
+      if (!user) return;
+  
+      UI.renderNavbarUser();
+      if (window.UserMenu) UserMenu.renderUserDropdown();
+  
+      document.addEventListener('DOMContentLoaded', () => {
+        Validaciones.attachLiveValidation(document.getElementById('form-name'),    'required', 'El nombre');
+        Validaciones.attachLiveValidation(document.getElementById('form-cost'),    'money',    'El costo');
+        Validaciones.attachLiveValidation(document.getElementById('form-price'),   'money',    'El precio de venta');
+        Validaciones.attachLiveValidation(document.getElementById('entrada-cantidad'), 'number', 'La cantidad');
+      });
+  
+      document.getElementById('btn-logout').addEventListener('click', () => {
+        document.getElementById('modal-logout').classList.add('open');
+      });
+      document.getElementById('confirm-logout').addEventListener('click', async () => {
+        const btn = document.getElementById('confirm-logout');
+        UI.setLoading(btn, true);
+        await Auth.logout();
+      });
+  
+      Inventario.init();
+    });
+  </script>
+  <script>
+  // Funciones globales para cerrar modales de proveedores
+  function closeProveedoresModal() {
+    document.getElementById('modal-proveedores').classList.remove('open');
+  }
+  
+  function closeProveedorFormModal() {
+    document.getElementById('modal-proveedor-form').classList.remove('open');
+  }
+</script>
+  </body>
+  </html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gastos — Cocobongo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <style>
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+    .mb-0 { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+ 
+<div class="app-wrapper">
+  <main class="main-content page-fade">
+ 
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1>Gestión de gastos</h1>
+        <p>Registrar y consultar egresos operativos por tipo y sucursal.</p>
+      </div>
+    </div>
+ 
+    <!-- ===== Formulario ===== -->
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-header-row">
+        <h2>Registrar gasto</h2>
+        <span class="badge badge-blue">ADMIN</span>
+      </div>
+ 
+      <form id="gastos-form" novalidate autocomplete="off">
+        <div class="form-grid-3">
+ 
+          <!-- type -->
+          <div class="form-group">
+            <label class="form-label" for="gasto-tipo">Tipo de gasto <span class="required">*</span></label>
+            <select class="form-control" id="gasto-tipo">
+              <option value="">Selecciona tipo</option>
+              <option value="PERSONAL">Personal</option>
+              <option value="MAINTENANCE">Mantenimiento</option>
+              <option value="RENT">Arriendo</option>
+              <option value="SERVICES">Servicios</option>
+              <option value="EMPLOYEE">Empleados</option>
+              <option value="OTHER">Otros</option>
+            </select>
+            <p class="form-error" id="gasto-tipo-error"><span>⚠</span> <span class="err-text"></span></p>
+          </div>
+ 
+          <!-- total -->
+          <div class="form-group">
+            <label class="form-label" for="gasto-total">Monto (COP) <span class="required">*</span></label>
+            <input class="form-control" type="number" id="gasto-total" min="1" step="100" placeholder="0"/>
+            <p class="form-error" id="gasto-total-error"><span>⚠</span> <span class="err-text"></span></p>
+          </div>
+ 
+          <!-- date: solo DATE (YYYY-MM-DD), la BD no acepta timestamp -->
+          <div class="form-group">
+            <label class="form-label" for="gasto-date">Fecha <span class="required">*</span></label>
+            <input class="form-control" type="date" id="gasto-date"/>
+            <p class="form-error" id="gasto-date-error"><span>&#9888;</span> <span class="err-text"></span></p>
+          </div>
+ 
+        </div>
+ 
+        <!-- description -->
+        <div class="form-group">
+          <label class="form-label" for="gasto-description">Descripción</label>
+          <input class="form-control" type="text" id="gasto-description" placeholder="Detalle del gasto (opcional)"/>
+        </div>
+ 
+        <!-- idBranch -->
+        <div class="form-group">
+          <label class="form-label" for="gasto-idBranch">Sucursal <span class="required">*</span></label>
+          <select class="form-control" id="gasto-idBranch">
+            <option value="">Cargando sucursales...</option>
+          </select>
+          <p class="form-error" id="gasto-idBranch-error"><span>⚠</span> <span class="err-text"></span></p>
+        </div>
+ 
+        <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">
+          <button type="button" class="btn btn-secondary" id="btn-clear-gasto">Limpiar</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-gasto">Registrar gasto</button>
+        </div>
+      </form>
+    </div>
+ 
+    <!-- ===== Filtros + Tabla ===== -->
+    <div class="card">
+      <div class="card-header-row">
+        <h2>Listado de gastos</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge badge-gray" id="gastos-total">—</span>
+          <span class="badge badge-green" id="gastos-sum">Total: $0</span>
+        </div>
+      </div>
+ 
+      <form id="gastos-filtros" class="filters-grid" style="margin-bottom:16px">
+ 
+        <div class="form-group mb-0">
+          <label class="form-label" for="filtro-type">Tipo</label>
+          <select class="form-control" id="filtro-type">
+            <option value="">Todos</option>
+            <option value="PERSONAL">Personal</option>
+            <option value="MAINTENANCE">Mantenimiento</option>
+            <option value="RENT">Arriendo</option>
+            <option value="SERVICES">Servicios</option>
+            <option value="EMPLOYEE">Empleados</option>
+            <option value="OTHER">Otros</option>
+          </select>
+        </div>
+ 
+        <div class="form-group mb-0">
+          <label class="form-label" for="filtro-dateFrom">Desde</label>
+          <input class="form-control" type="date" id="filtro-dateFrom"/>
+        </div>
+ 
+        <div class="form-group mb-0">
+          <label class="form-label" for="filtro-dateTo">Hasta</label>
+          <input class="form-control" type="date" id="filtro-dateTo"/>
+        </div>
+ 
+        <div class="form-group mb-0">
+          <label class="form-label" for="filtro-idBranch">Sucursal</label>
+          <select class="form-control" id="filtro-idBranch">
+            <option value="">Todas</option>
+          </select>
+        </div>
+ 
+        <div class="form-group mb-0" style="grid-column: 1 / -1">
+          <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">
+            <button type="button" class="btn btn-secondary" id="btn-reset-filtros">Limpiar filtros</button>
+            <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+          </div>
+        </div>
+      </form>
+ 
+      <!-- Loading -->
+      <div class="section-loading" id="gastos-loading" style="display:none">
+        <span class="spinner spinner-dark"></span>
+        <span>Cargando gastos...</span>
+      </div>
+ 
+      <!-- Tabla -->
+      <div class="tbl-wrapper" id="gastos-table-wrap" style="display:none">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Descripción</th>
+              <th class="text-right">Monto</th>
+              <th>Sucursal</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody id="gastos-body"></tbody>
+        </table>
+      </div>
+ 
+      <!-- Vacío -->
+      <div class="empty-state" id="gastos-empty" style="display:none">
+        <div class="empty-icon">💰</div>
+        <h3>No hay gastos</h3>
+        <p>No se encontraron registros con los filtros actuales.</p>
+      </div>
+ 
+    </div>
+  </main>
+</div>
+ 
+<script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/layout.js"></script>
+<script src="../js/validaciones.js"></script>
+<script src="../js/menu.js"></script>
+<script src="../js/gastos.js"></script>
+<script>
+  Layout.init({ allowedRoles: ['ADMIN'] }).then(ok => {
+    if (ok) Gastos.init();
+  });
+</script>
+ 
+</body>
+</html>
+ 

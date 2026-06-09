@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ventas — Cocobongo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <style>
+
+    /* ===== POS LAYOUT: dos columnas ===== */
+    .pos-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* Buscador de producto con sugerencias */
+    .product-search-wrap { position: relative; }
+
+    .product-suggestions {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--white);
+      border: 1.5px solid var(--blue-mid);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      z-index: 50;
+      max-height: 240px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .product-suggestions.open { display: block; }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      border-bottom: 1px solid var(--gray-light);
+      transition: background var(--dur-fast);
+    }
+
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: var(--blue-pale); }
+
+    .suggestion-item .s-name { font-weight: 500; color: var(--text-main); }
+    .suggestion-item .s-meta { font-size: 11px; color: var(--gray-text); margin-top: 1px; }
+    .suggestion-item .s-price { font-weight: 600; color: var(--navy); flex-shrink: 0; margin-left: 12px; }
+
+    /* Tabla de items en la venta */
+    .items-table { width: 100%; border-collapse: collapse; }
+
+    .items-table th {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--gray-text);
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 2px solid var(--gray-light);
+    }
+
+    .items-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--gray-light);
+      vertical-align: middle;
+      font-size: 13px;
+      color: var(--text-main);
+    }
+
+    .items-table tbody tr:hover { background: var(--gray-light); }
+    .items-table tbody tr.out-of-stock td { opacity: .5; }
+
+    .qty-input {
+      width: 64px;
+      padding: 5px 8px;
+      border: 1.5px solid var(--gray-mid);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      text-align: center;
+      font-family: var(--font-body);
+      transition: border-color var(--dur-fast);
+    }
+
+    .qty-input:focus { outline: none; border-color: var(--blue-mid); }
+    .qty-input.invalid { border-color: var(--red); }
+
+    .remove-item {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: var(--red-bg);
+      color: var(--red);
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--dur-fast);
+      line-height: 1;
+    }
+
+    .remove-item:hover { background: var(--red); color: #fff; transform: scale(1.1); }
+
+    .empty-cart {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray-text);
+    }
+
+    .empty-cart .empty-icon { font-size: 40px; margin-bottom: 10px; opacity: .4; }
+    .empty-cart p { font-size: 13px; }
+
+    /* Panel de cobro */
+    .panel-cobro {
+      position: sticky;
+      top: calc(var(--topbar-h) + 20px);
+    }
+
+    .total-display {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--blue-mid) 100%);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .total-display .total-lbl {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.6);
+      margin-bottom: 6px;
+    }
+
+    .total-display .total-val {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .total-display .total-items {
+      font-size: 12px;
+      color: rgba(255,255,255,.5);
+      margin-top: 6px;
+    }
+
+    /* Payment method pills */
+    .payment-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .pay-pill {
+      padding: 10px 8px;
+      border: 2px solid var(--gray-mid);
+      border-radius: var(--radius-md);
+      background: var(--white);
+      cursor: pointer;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      transition: all var(--dur-fast) var(--ease);
+      font-family: var(--font-body);
+    }
+
+    .pay-pill .pay-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+
+    .pay-pill:hover {
+      border-color: var(--navy);
+      color: var(--navy);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .pay-pill.selected {
+      border-color: var(--navy);
+      background: var(--navy);
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Badge estado stock */
+    .stock-ok  { color: var(--green); font-weight: 500; }
+    .stock-low { color: var(--red);   font-weight: 600; }
+
+    /* Entrada animations */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp .35s var(--ease) forwards;
+    }
+    @keyframes fadeUp { to { opacity:1; transform:none; } }
+    .d-0{animation-delay:.05s} .d-1{animation-delay:.1s} .d-2{animation-delay:.15s} .d-3{animation-delay:.2s}
+
+    @media(max-width:900px) {
+      .pos-grid { grid-template-columns: 1fr; }
+      .panel-cobro { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ===== TOPBAR ===== -->
+<nav class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-logo">CB</div>
+    <div class="topbar-brand">
+      <span class="topbar-brand-name">Cocobongo</span>
+      <span class="topbar-brand-sub">Sistema de Gestión</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-notif" title="Notificaciones">🔔<span class="notif-dot" id="notif-dot" style="display:none"></span></div>
+    <div class="topbar-user">
+      <div class="topbar-avatar" id="navbar-avatar">??</div>
+      <div class="topbar-user-info">
+        <div class="topbar-user-name" id="navbar-user-name">Cargando...</div>
+        <span class="topbar-user-role" id="navbar-user-role">—</span>
+      </div>
+    </div>
+    <button class="btn-logout" id="btn-logout">⏏ Salir</button>
+  </div>
+</nav>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+  <nav>
+    <p class="sidebar-section-label">Principal</p>
+    <a class="s-item" href="dashboard.html"><span class="s-icon">▦</span>Dashboard</a>
+    <a class="s-item active" href="ventas.html"><span class="s-icon">🛒</span>Ventas</a>
+    <div class="s-section" data-roles="ADMIN">
+      <p class="sidebar-section-label" style="margin-top:4px">Gestión</p>
+      <a class="s-item" href="inventario.html"><span class="s-icon">📦</span>Inventario</a>
+      <a class="s-item" href="clientes.html"><span class="s-icon">👥</span>Clientes</a>
+      <a class="s-item" href="gastos.html"><span class="s-icon">💰</span>Gastos</a>
+      <a class="s-item" href="reportes.html"><span class="s-icon">📈</span>Reportes</a>
+      <div class="sidebar-sep"></div>
+      <p class="sidebar-section-label">Administración</p>
+      <a class="s-item" href="usuarios.html"><span class="s-icon">⚙</span>Usuarios</a>
+      <a class="s-item" href="sucursales.html"><span class="s-icon">🏪</span>Sucursales</a>
+    </div>
+  </nav>
+  <div style="margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.07)">
+    <p style="font-size:10px;color:rgba(255,255,255,.25);line-height:1.5">v1.0 — Bases de Datos 2026</p>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<div class="app-wrapper">
+  <main class="main-content">
+
+    <div class="page-header fade-in d-0" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1>Registrar venta</h1>
+        <p>Agrega productos, elige el método de pago y confirma</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="form-control" id="sucursal-sel" style="width:200px" title="Sucursal de la venta">
+          <option value="">Cargando sucursales...</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="pos-grid">
+
+      <!-- ===== COLUMNA IZQUIERDA: carrito ===== -->
+      <div>
+
+        <!-- Catálogo de productos -->
+        <div class="card fade-in d-1" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <p style="font-size:13px;font-weight:500">Productos disponibles</p>
+            <span class="badge badge-gray" id="catalog-count">0 productos</span>
+          </div>
+          <div class="input-wrapper" style="margin-bottom:12px">
+            <span class="input-icon">🔍</span>
+            <input class="form-control" id="product-search"
+                   placeholder="Buscar por nombre..." autocomplete="off"/>
+          </div>
+          <div id="catalog-list" style="max-height:280px;overflow-y:auto">
+            <p style="font-size:13px;color:var(--gray-text);text-align:center;padding:20px">
+              Selecciona una sucursal para ver los productos
+            </p>
+          </div>
+        </div>
+
+        <!-- Tabla de items -->
+        <div class="card fade-in d-2">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <p style="font-size:13px;font-weight:500">Productos en la venta</p>
+            <span class="badge badge-navy" id="items-count">0 items</span>
+          </div>
+
+          <div id="cart-container">
+            <div class="empty-cart" id="empty-cart">
+              <div class="empty-icon">🛒</div>
+              <p>Aún no has agregado productos.<br/>Usa el buscador de arriba.</p>
+            </div>
+
+            <table class="items-table" id="items-table" style="display:none">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th style="text-align:center">Cant.</th>
+                  <th style="text-align:right">P. unit.</th>
+                  <th style="text-align:right">Subtotal</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="items-body"></tbody>
+            </table>
+          </div>
+
+          <!-- Stock alert -->
+          <div class="alert alert-danger mt-12" id="stock-error" style="display:none">
+            <span class="alert-icon">⚠</span>
+            <span id="stock-error-msg">Stock insuficiente para uno o más productos.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== COLUMNA DERECHA: cobro ===== -->
+      <div class="panel-cobro fade-in d-3">
+
+        <!-- Total -->
+        <div class="total-display">
+          <p class="total-lbl">Total a cobrar</p>
+          <p class="total-val" id="total-display">$0</p>
+          <p class="total-items" id="total-items-label">0 productos</p>
+        </div>
+
+        <!-- Método de pago -->
+        <div class="card" style="margin-bottom:14px">
+          <p style="font-size:12px;font-weight:500;margin-bottom:10px;color:var(--text-sub)">MÉTODO DE PAGO</p>
+          <div class="payment-methods">
+            <button class="pay-pill" data-method="CASH">
+              <span class="pay-icon">💵</span> Efectivo
+            </button>
+            <button class="pay-pill" data-method="CARD">
+              <span class="pay-icon">💳</span> Tarjeta
+            </button>
+            <button class="pay-pill" data-method="TRANSFER">
+              <span class="pay-icon">📱</span> Transferencia
+            </button>
+            <button class="pay-pill" data-method="CREDIT">
+              <span class="pay-icon">📋</span> Crédito
+            </button>
+          </div>
+          <p class="form-error" id="payment-error" style="display:none">
+            <span>⚠</span> Selecciona un método de pago.
+          </p>
+        </div>
+
+        <!-- Cliente (visible solo en crédito) -->
+        <div class="card" id="client-section" style="margin-bottom:14px">
+          <p style="font-size:12px;font-weight:500;margin-bottom:4px;color:var(--text-sub)">CLIENTE</p>
+          <p id="client-hint" style="font-size:11px;color:var(--gray-text);margin-bottom:10px">Opcional — asocia la venta a un cliente.</p>
+          <div class="form-group mb-0 product-search-wrap">
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input class="form-control" id="client-search"
+                     placeholder="Buscar por nombre o teléfono..." autocomplete="off"/>
+            </div>
+            <div class="product-suggestions" id="client-suggestions"></div>
+            <p class="form-error" id="client-error" style="display:none">
+              <span>⚠</span> Debes asociar un cliente para ventas a crédito.
+            </p>
+          </div>
+          <div id="client-selected" style="display:none;margin-top:10px;padding:10px 12px;background:var(--blue-pale);border-radius:var(--radius-sm);font-size:13px">
+            <strong id="client-name-display"></strong>
+            <span style="color:var(--gray-text);margin-left:8px" id="client-balance-display"></span>
+            <button type="button" onclick="Ventas.clearClient()" style="float:right;background:none;border:none;color:var(--red);cursor:pointer;font-size:12px">✕ Quitar</button>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="card" style="margin-bottom:16px">
+          <p style="font-size:12px;font-weight:500;margin-bottom:8px;color:var(--text-sub)">OBSERVACIONES</p>
+          <textarea class="form-control" id="notes" rows="2"
+                    placeholder="Nota opcional sobre la venta..." style="resize:none"></textarea>
+        </div>
+
+        <!-- Botones -->
+        <button type="button" class="btn btn-secondary btn-block mb-8" onclick="Ventas.clearCart()" id="btn-cancel">
+          🗑 Limpiar venta
+        </button>
+        <button class="btn btn-primary btn-lg btn-block" id="btn-confirmar">
+          ✓ Confirmar venta
+        </button>
+
+      </div>
+    </div>
+    <!-- ===== HISTORIAL DE VENTAS ===== --
+
+  </main>
+</div>
+
+<!-- ===== MODAL CONFIRMACIÓN ===== -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <h2 class="modal-title">Confirmar venta</h2>
+      <button class="modal-close" onclick="closeModal('modal-confirm')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="confirm-summary" style="font-size:13px;color:var(--text-sub);line-height:1.8"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-confirm')">Cancelar</button>
+      <button class="btn btn-success" id="btn-do-confirm">✓ Registrar venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL LOGOUT ===== -->
+<div class="modal-overlay" id="modal-logout">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <h2 class="modal-title">Cerrar sesión</h2>
+      <button class="modal-close" onclick="closeModal('modal-logout')">✕</button>
+    </div>
+    <div class="modal-body"><p style="font-size:13px;color:var(--text-sub)">¿Deseas cerrar tu sesión?</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-logout')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-logout">Sí, salir</button>
+    </div>
+  </div>
+</div>
+
+<script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/validaciones.js"></script>
+<script src="../js/layout.js"></script>
+
+<script src="../js/ventas.js"></script>
+<script src="../js/menu.js"></script>
+<script>
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+window.closeModal = closeModal;
+document.querySelectorAll('.modal-overlay').forEach(m =>
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); })
+);
+
+Auth.guardPage().then((user) => {
+  if (!user) return;
+  UI.renderNavbarUser();
+  if (window.UserMenu) UserMenu.renderUserDropdown();
+  document.getElementById('btn-logout').addEventListener('click', () => openModal('modal-logout'));
+  document.getElementById('confirm-logout').addEventListener('click', () => Auth.logout());
+  Ventas.init(); // ← directo
+});
+</script>
+</body>
+</html>

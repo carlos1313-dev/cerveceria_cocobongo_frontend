@@ -1,0 +1,280 @@
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Sucursales — Cocobongo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="../css/global.css"/>
+    <style>
+      .status-dot {
+        display: inline-block;
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+        flex-shrink: 0;
+      }
+      .status-dot.active   { background: var(--green); box-shadow: 0 0 0 3px rgba(39,174,96,.2); }
+      .status-dot.inactive { background: var(--gray-mid); }
+  
+      .status-cell { display: flex; align-items: center; }
+  
+      #modal-sucursal .modal { max-width: 460px; }
+  
+      .tbl-wrapper { position: relative; }
+  
+      .page-loading-overlay {
+        position: absolute; inset: 0;
+        background: rgba(255,255,255,.7);
+        backdrop-filter: blur(2px);
+        display: flex; align-items: center; justify-content: center;
+        border-radius: var(--radius-lg);
+        z-index: 10;
+      }
+      .page-loading-overlay.hidden { display: none; }
+    </style>
+  </head>
+  <body>
+  
+  <div id="toast-container" class="toast-container"></div>
+  
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="btn-hamburger" id="btn-hamburger">☰</button>
+      <div class="topbar-logo">CB</div>
+      <div class="topbar-brand">
+        <span class="topbar-brand-name">Cocobongo</span>
+        <span class="topbar-brand-sub">Sistema de Gestión</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-user" id="topbar-user-chip">
+        <div class="topbar-avatar" id="topbar-avatar">—</div>
+        <div class="topbar-user-info">
+          <div class="topbar-user-name" id="topbar-name">—</div>
+          <span class="topbar-user-role role-admin" id="topbar-role">ADMIN</span>
+        </div>
+      </div>
+      <button class="btn-logout" id="btn-logout">⏻ Salir</button>
+    </div>
+  </header>
+  
+ <aside class="sidebar" id="sidebar">
+  <nav>
+    <p class="sidebar-section-label">Principal</p>
+    <a class="s-item" href="dashboard.html">
+      <span class="s-icon">▦</span> Dashboard
+    </a>
+    <a class="s-item" href="ventas.html">
+      <span class="s-icon">🛒</span> Ventas
+    </a>
+    
+    <p class="sidebar-section-label" style="margin-top:4px">Gestión</p>
+    <a class="s-item" href="inventario.html">
+      <span class="s-icon">📦</span> Inventario
+    </a>
+    <a class="s-item" href="clientes.html">
+      <span class="s-icon">👥</span> Clientes
+    </a>
+    <a class="s-item" href="gastos.html">
+      <span class="s-icon">💰</span> Gastos
+    </a>
+    <a class="s-item" href="reportes.html">
+      <span class="s-icon">📈</span> Reportes
+    </a>
+    
+    <div class="sidebar-sep"></div>
+    
+    <p class="sidebar-section-label">Administración</p>
+    <a class="s-item active" href="sucursales.html">
+      <span class="s-icon">🏪</span> Sucursales
+    </a>
+    <a class="s-item" href="usuarios.html">
+      <span class="s-icon">⚙️</span> Usuarios
+    </a>
+  </nav>
+  
+  <div style="margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.07)">
+    <p style="font-size:10px;color:rgba(255,255,255,.25)">v1.0 — Bases de Datos 2026</p>
+  </div>
+</aside>
+  
+  <!-- MAIN -->
+  <div class="app-wrapper">
+    <main class="main-content">
+  
+      <div class="page-header">
+        <h1>Sucursales</h1>
+        <p>Consulta y edita la información de las sucursales registradas</p>
+      </div>
+  
+      <!-- Búsqueda -->
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input
+            class="form-control"
+            type="text"
+            id="search-input"
+            placeholder="Buscar por nombre, ciudad o dirección..."
+          />
+        </div>
+        <select class="form-control" id="filter-status" style="width:160px;flex-shrink:0">
+          <option value="">Todas</option>
+          <option value="true">Activas</option>
+          <option value="false">Inactivas</option>
+        </select>
+        <button type="button" class="btn btn-primary" id="btn-new-branch">+ Nueva sucursal</button>
+      </div>
+  
+      <!-- Tabla -->
+      <div class="tbl-wrapper">
+        <div class="page-loading-overlay" id="tbl-loading">
+          <span class="spinner spinner-dark"></span>
+        </div>
+  
+        <table class="tbl" id="branches-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Ciudad</th>
+              <th>Dirección</th>
+              <th>Estado</th>
+              <th style="text-align:right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="branches-tbody">
+            <!-- filas generadas por JS -->
+          </tbody>
+        </table>
+  
+        <div class="empty-state" id="empty-state" style="display:none">
+          <div class="empty-state-icon">🏪</div>
+          <h3>Sin resultados</h3>
+          <p>No se encontraron sucursales con ese criterio.</p>
+        </div>
+      </div>
+  
+      <!-- Paginación -->
+      <div class="pagination-bar" id="pagination-bar" style="display:none">
+        <span class="pagination-info" id="pagination-info"></span>
+        <div class="pagination" id="pagination-btns"></div>
+      </div>
+  
+    </main>
+  </div>
+  
+  <!-- MODAL EDITAR SUCURSAL -->
+  <div class="modal-overlay" id="modal-sucursal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Editar sucursal</h2>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-form" novalidate autocomplete="off">
+          <input type="hidden" id="edit-id"/>
+  
+          <div class="form-group">
+            <label class="form-label" for="edit-name">Nombre <span class="required">*</span></label>
+            <div class="input-wrapper">
+              <span class="input-icon">🏪</span>
+              <input class="form-control" type="text" id="edit-name" placeholder="Nombre de la sucursal"/>
+            </div>
+            <p class="form-error" id="edit-name-error"><span>⚠</span></p>
+          </div>
+  
+          <div class="two-col">
+            <div class="form-group">
+              <label class="form-label" for="edit-city">Ciudad <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <span class="input-icon">📍</span>
+                <input class="form-control" type="text" id="edit-city" placeholder="Ciudad"/>
+              </div>
+              <p class="form-error" id="edit-city-error"><span>⚠</span></p>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="edit-status">Estado</label>
+              <select class="form-control" id="edit-status">
+                <option value="true">Activa</option>
+                <option value="false">Inactiva</option>
+              </select>
+            </div>
+          </div>
+  
+          <div class="form-group">
+            <label class="form-label" for="edit-address">Dirección <span class="required">*</span></label>
+            <div class="input-wrapper">
+              <span class="input-icon">🗺</span>
+              <input class="form-control" type="text" id="edit-address" placeholder="Dirección completa"/>
+            </div>
+            <p class="form-error" id="edit-address-error"><span>⚠</span></p>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save">
+          <span id="btn-save-text">Guardar cambios</span>
+          <span class="spinner" id="btn-save-spinner" style="display:none"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL NUEVA SUCURSAL -->
+<div class="modal-overlay" id="modal-new-branch">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <h2 class="modal-title">Nueva sucursal</h2>
+      <button class="modal-close" id="modal-new-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="new-branch-form" novalidate autocomplete="off">
+        <div class="form-group">
+          <label class="form-label" for="new-name">Nombre <span class="required">*</span></label>
+          <div class="input-wrapper">
+            <span class="input-icon">🏪</span>
+            <input class="form-control" type="text" id="new-name" placeholder="Nombre de la sucursal"/>
+          </div>
+          <p class="form-error" id="new-name-error"><span>⚠</span></p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="new-city">Ciudad <span class="required">*</span></label>
+          <div class="input-wrapper">
+            <span class="input-icon">📍</span>
+            <input class="form-control" type="text" id="new-city" placeholder="Ciudad"/>
+          </div>
+          <p class="form-error" id="new-city-error"><span>⚠</span></p>
+        </div>
+
+        <div class="form-group mb-0">
+          <label class="form-label" for="new-address">Dirección <span class="required">*</span></label>
+          <div class="input-wrapper">
+            <span class="input-icon">🗺</span>
+            <input class="form-control" type="text" id="new-address" placeholder="Dirección completa"/>
+          </div>
+          <p class="form-error" id="new-address-error"><span>⚠</span></p>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btn-new-cancel">Cancelar</button>
+      <button class="btn btn-primary" id="btn-new-save">
+        <span id="btn-new-save-text">Crear sucursal</span>
+        <span class="spinner" id="btn-new-save-spinner" style="display:none"></span>
+      </button>
+    </div>
+  </div>
+</div>
+  <script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/menu.js"></script>
+  <script src="../js/sucursales.js"></script>
+  </body>
+  </html>
