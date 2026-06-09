@@ -137,7 +137,15 @@ const Ventas = (() => {
     return;
   }
 
-  container.innerHTML = filtered.map(p => `
+  container.innerHTML = filtered.map(p => {
+
+  const reserved =
+    cart.find(i => i.product.id === p.id)?.quantity || 0;
+
+  const available =
+    p.stock - reserved;
+
+  return `
     <div
       class="catalog-item"
       style="
@@ -160,15 +168,16 @@ const Ventas = (() => {
 
         <div style="font-size:11px;margin-top:2px">
           <span style="
-            color:${p.stock <= p.minStock ? 'var(--red)' : 'var(--green)'};
+            color:${available <= p.minStock ? 'var(--red)' : 'var(--green)'};
             font-weight:500;
           ">
-            Stock: ${p.stock}
+            Stock: ${available}
           </span>
         </div>
       </div>
 
       <div style="text-align:right;flex-shrink:0;margin-left:12px">
+
         <div style="font-weight:600;color:var(--navy)">
           ${fmt(p.price)}
         </div>
@@ -176,14 +185,18 @@ const Ventas = (() => {
         <button
           class="btn btn-primary btn-sm add-product-btn"
           data-id="${p.id}"
+          ${available <= 0 ? 'disabled' : ''}
           style="margin-top:4px;padding:4px 10px;font-size:11px"
         >
-          + Agregar
+          ${available <= 0 ? 'Sin stock' : '+ Agregar'}
         </button>
+
       </div>
 
     </div>
-  `).join('');
+  `;
+
+}).join('');
 
   // Eventos SOLO para los botones
   container.querySelectorAll('.add-product-btn').forEach(btn => {
@@ -323,41 +336,54 @@ const Ventas = (() => {
      CARRITO
      ============================================================ */
   function addProduct(id) {
-    console.log("addProduct ejecutado", id);
 
-    const product = catalog.find(p => p.id === id);
-    console.log("Producto:", product);
+  const product = catalog.find(p => p.id === id);
 
-    if (!product) return;
+  if (!product) return;
 
-    if (product.stock === 0) {
-      console.log("SIN STOCK");
-       UI.toast('Sin stock disponible.', 'error'); 
-       return; }
+  const existing = cart.find(i => i.product.id === id);
 
-    console.log("AGREGADO");
- 
-    const existing = cart.find(i => i.product.id === id);
-    if (existing) {
-      existing.quantity = Math.min(existing.quantity + 1, product.stock);
-    } else {
-      cart.push({ product, quantity: 1 });
-    }
- 
-    renderCart();
-    UI.toast(`${product.name} agregado.`, 'success', 1200);
+  const currentQty = existing ? existing.quantity : 0;
+
+  if (currentQty >= product.stock) {
+    UI.toast(
+      `No hay más unidades disponibles de ${product.name}.`,
+      'error'
+    );
+    return;
   }
+
+  if (existing) {
+    existing.quantity++;
+  } else {
+    cart.push({
+      product,
+      quantity: 1
+    });
+  }
+
+  renderCart();
+  renderCatalogList(catalog);
+
+  UI.toast(
+    `${product.name} agregado.`,
+    'success',
+    1200
+  );
+}
  
   function changeQty(idx, val) {
     const n = parseInt(val, 10);
     const max = cart[idx].product.stock;
     cart[idx].quantity = isNaN(n) || n < 1 ? 1 : Math.min(n, max);
     renderCart();
+    renderCatalogList(catalog);
   }
  
   function removeItem(idx) {
     cart.splice(idx, 1);
     renderCart();
+    renderCatalogList(catalog);
   }
  
   function clearCart() {
@@ -369,6 +395,7 @@ const Ventas = (() => {
     clearClient();
     $('stock-error').style.display = 'none';
     renderCart();
+    renderCatalogList(catalog);
   }
  
   function renderCart() {
