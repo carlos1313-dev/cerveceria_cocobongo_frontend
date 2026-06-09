@@ -41,7 +41,7 @@ const Reportes = (() => {
     const v = Number(n);
     if (Number.isNaN(v)) return '—';
     return new Intl.NumberFormat('es-CO', {
-      style: 'currency', currency: 'COP', maximumFractionDigits: 0
+      style: 'currency', currency: 'COP', maximumFractionDigits: 2, minimumFractionDigits: 2
     }).format(v);
   }
  
