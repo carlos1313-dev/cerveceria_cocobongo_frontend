@@ -110,49 +110,94 @@ const Ventas = (() => {
   }
  
   function renderCatalogList(data) {
-    const container = $('catalog-list');
-    const countEl   = $('catalog-count');
-    if (!container) return;
- 
-    const q = ($('product-search')?.value || '').trim().toLowerCase();
-    const filtered = q
-      ? data.filter(p => p.name.toLowerCase().includes(q))
-      : data;
- 
-    if (countEl) countEl.textContent = `${filtered.length} producto${filtered.length !== 1 ? 's' : ''}`;
- 
-    if (!filtered.length) {
-      container.innerHTML = `<p style="font-size:13px;color:var(--gray-text);text-align:center;padding:20px">
-        ${q ? 'Sin resultados para "' + esc(q) + '"' : 'No hay productos con stock en esta sucursal'}
-      </p>`;
-      return;
-    }
- 
-    container.innerHTML = filtered.map(p => `
-      <div class="catalog-item" data-id="${p.id}" style="
-        display:flex;align-items:center;justify-content:space-between;
-        padding:10px 12px;border-bottom:1px solid var(--gray-light);
-        cursor:pointer;transition:background var(--dur-fast);border-radius:var(--radius-sm)
-      " onmouseover="this.style.background='var(--blue-pale)'"
-         onmouseout="this.style.background=''">
-        <div>
-          <div style="font-weight:500;font-size:13px">${esc(p.name)}</div>
-          <div style="font-size:11px;color:var(--gray-text);margin-top:2px">
-style="color:${p.stock <= p.minStock ? 'var(--red)' : 'var(--green)'};font-weight:500" 
-       </div>
-        <div style="text-align:right;flex-shrink:0;margin-left:12px">
-          <div style="font-weight:600;color:var(--navy)">${fmt(p.price)}</div>
-          <button class="btn btn-primary btn-sm" style="margin-top:4px;padding:4px 10px;font-size:11px">
-            + Agregar
-          </button>
+  const container = $('catalog-list');
+  const countEl = $('catalog-count');
+
+  if (!container) return;
+
+  const q = ($('product-search')?.value || '').trim().toLowerCase();
+
+  const filtered = q
+    ? data.filter(p => p.name.toLowerCase().includes(q))
+    : data;
+
+  if (countEl) {
+    countEl.textContent =
+      `${filtered.length} producto${filtered.length !== 1 ? 's' : ''}`;
+  }
+
+  if (!filtered.length) {
+    container.innerHTML = `
+      <p style="font-size:13px;color:var(--gray-text);text-align:center;padding:20px">
+        ${q
+          ? `Sin resultados para "${esc(q)}"`
+          : 'No hay productos con stock en esta sucursal'}
+      </p>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => `
+    <div
+      class="catalog-item"
+      style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:10px 12px;
+        border-bottom:1px solid var(--gray-light);
+        transition:background var(--dur-fast);
+        border-radius:var(--radius-sm)
+      "
+      onmouseover="this.style.background='var(--blue-pale)'"
+      onmouseout="this.style.background=''"
+    >
+
+      <div>
+        <div style="font-weight:500;font-size:13px">
+          ${esc(p.name)}
+        </div>
+
+        <div style="font-size:11px;margin-top:2px">
+          <span style="
+            color:${p.stock <= p.minStock ? 'var(--red)' : 'var(--green)'};
+            font-weight:500;
+          ">
+            Stock: ${p.stock}
+          </span>
         </div>
       </div>
-    `).join('');
- 
-    container.querySelectorAll('.catalog-item').forEach(el => {
-      el.addEventListener('click', () => addProduct(parseInt(el.dataset.id, 10)));
+
+      <div style="text-align:right;flex-shrink:0;margin-left:12px">
+        <div style="font-weight:600;color:var(--navy)">
+          ${fmt(p.price)}
+        </div>
+
+        <button
+          class="btn btn-primary btn-sm add-product-btn"
+          data-id="${p.id}"
+          style="margin-top:4px;padding:4px 10px;font-size:11px"
+        >
+          + Agregar
+        </button>
+      </div>
+
+    </div>
+  `).join('');
+
+  // Eventos SOLO para los botones
+  container.querySelectorAll('.add-product-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+
+      const id = parseInt(btn.dataset.id, 10);
+
+      console.log('CLICK BOTON', id);
+
+      addProduct(id);
     });
-  }
+  });
+}
  
   async function loadClients(search = '') {
     try {
@@ -278,9 +323,19 @@ style="color:${p.stock <= p.minStock ? 'var(--red)' : 'var(--green)'};font-weigh
      CARRITO
      ============================================================ */
   function addProduct(id) {
+    console.log("addProduct ejecutado", id);
+
     const product = catalog.find(p => p.id === id);
+    console.log("Producto:", product);
+
     if (!product) return;
-    if (product.stock === 0) { UI.toast('Sin stock disponible.', 'error'); return; }
+
+    if (product.stock === 0) {
+      console.log("SIN STOCK");
+       UI.toast('Sin stock disponible.', 'error'); 
+       return; }
+
+    console.log("AGREGADO");
  
     const existing = cart.find(i => i.product.id === id);
     if (existing) {
