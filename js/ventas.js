@@ -16,8 +16,14 @@ const Ventas = (() => {
   const $ = id => document.getElementById(id);
  
   function fmt(n) {
-    return '$' + Math.round(Number(n) || 0).toLocaleString('es-CO');
-  }
+  return '$' + Number(n || 0).toLocaleString(
+    'es-CO',
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }
+  );
+}
  
   function esc(str) {
     return String(str || '').replace(/[&<>"']/g, c =>
