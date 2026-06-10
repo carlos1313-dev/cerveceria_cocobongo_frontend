@@ -191,7 +191,7 @@ const Ventas = (() => {
         <button
           class="btn btn-primary btn-sm add-product-btn"
           data-id="${p.id}"
-          ${available <= 0 ? 'disabled' : ''}
+          
           style="margin-top:4px;padding:4px 10px;font-size:11px"
         >
           ${available <= 0 ? 'Sin stock' : '+ Agregar'}
