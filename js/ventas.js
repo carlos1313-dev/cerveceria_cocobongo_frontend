@@ -16,8 +16,14 @@ const Ventas = (() => {
   const $ = id => document.getElementById(id);
  
   function fmt(n) {
-    return '$' + Math.round(Number(n) || 0).toLocaleString('es-CO');
-  }
+  return '$' + Number(n || 0).toLocaleString(
+    'es-CO',
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }
+  );
+}
  
   function esc(str) {
     return String(str || '').replace(/[&<>"']/g, c =>
@@ -185,7 +191,7 @@ const Ventas = (() => {
         <button
           class="btn btn-primary btn-sm add-product-btn"
           data-id="${p.id}"
-          ${available <= 0 ? 'disabled' : ''}
+          
           style="margin-top:4px;padding:4px 10px;font-size:11px"
         >
           ${available <= 0 ? 'Sin stock' : '+ Agregar'}
