@@ -9,216 +9,264 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/global.css"/>
   <style>
-
-    /* ===== POS LAYOUT: dos columnas ===== */
+ 
+    /* ── Layout POS ──────────────────────────────────────── */
     .pos-grid {
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: 1fr 400px;
       gap: 20px;
       align-items: start;
     }
-
-    /* Buscador de producto con sugerencias */
-    .product-search-wrap { position: relative; }
-
-    .product-suggestions {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0; right: 0;
-      background: var(--white);
-      border: 1.5px solid var(--blue-mid);
+ 
+    /* ── Widget tasa BCV ─────────────────────────────────── */
+    .rate-widget {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--navy);
       border-radius: var(--radius-md);
-      box-shadow: var(--shadow-md);
-      z-index: 50;
-      max-height: 240px;
-      overflow-y: auto;
-      display: none;
+      font-size: 12px;
+      color: #fff;
     }
-
-    .product-suggestions.open { display: block; }
-
-    .suggestion-item {
+    .rate-label {
+      opacity: .6;
+      font-size: 10px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .rate-value {
+      font-weight: 700;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+    .rate-edit-btn {
+      background: rgba(255,255,255,.15);
+      border: none;
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      cursor: pointer;
+      color: #fff;
+      font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .rate-edit-btn:hover { background: rgba(255,255,255,.3); }
+    .rate-warning { color: var(--amber); font-weight: 600; }
+ 
+    /* ── Catálogo ─────────────────────────────────────────── */
+    .catalog-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 14px;
-      cursor: pointer;
-      font-size: 13px;
-      border-bottom: 1px solid var(--gray-light);
-      transition: background var(--dur-fast);
-    }
-
-    .suggestion-item:last-child { border-bottom: none; }
-    .suggestion-item:hover { background: var(--blue-pale); }
-
-    .suggestion-item .s-name { font-weight: 500; color: var(--text-main); }
-    .suggestion-item .s-meta { font-size: 11px; color: var(--gray-text); margin-top: 1px; }
-    .suggestion-item .s-price { font-weight: 600; color: var(--navy); flex-shrink: 0; margin-left: 12px; }
-
-    /* Tabla de items en la venta */
-    .items-table { width: 100%; border-collapse: collapse; }
-
-    .items-table th {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: .07em;
-      text-transform: uppercase;
-      color: var(--gray-text);
-      padding: 8px 12px;
-      text-align: left;
-      border-bottom: 2px solid var(--gray-light);
-    }
-
-    .items-table td {
       padding: 10px 12px;
       border-bottom: 1px solid var(--gray-light);
-      vertical-align: middle;
-      font-size: 13px;
-      color: var(--text-main);
+      border-radius: var(--radius-sm);
+      transition: background .12s;
+      gap: 12px;
     }
-
+    .catalog-item:hover { background: var(--blue-pale); }
+    .catalog-item-info { flex: 1; min-width: 0; }
+    .catalog-item-name { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .catalog-item-prices { display: flex; gap: 8px; align-items: baseline; margin-top: 3px; }
+    .price-usd { font-weight: 700; color: var(--navy); font-size: 13px; }
+    .price-ves { font-size: 11px; color: var(--gray-text); }
+    .catalog-item-right { flex-shrink: 0; text-align: right; }
+    .stock-chip {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+    .stock-ok  { background: #e8f5e9; color: #2e7d32; }
+    .stock-low { background: #ffebee; color: #b71c1c; }
+ 
+    /* ── Items table ──────────────────────────────────────── */
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th {
+      font-size: 10px; font-weight: 600; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--gray-text);
+      padding: 8px 12px; text-align: left;
+      border-bottom: 2px solid var(--gray-light);
+    }
+    .items-table td {
+      padding: 10px 12px; border-bottom: 1px solid var(--gray-light);
+      vertical-align: middle; font-size: 13px; color: var(--text-main);
+    }
     .items-table tbody tr:hover { background: var(--gray-light); }
     .items-table tbody tr.out-of-stock td { opacity: .5; }
-
     .qty-input {
-      width: 64px;
-      padding: 5px 8px;
-      border: 1.5px solid var(--gray-mid);
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      text-align: center;
-      font-family: var(--font-body);
-      transition: border-color var(--dur-fast);
+      width: 64px; padding: 5px 8px;
+      border: 1.5px solid var(--gray-mid); border-radius: var(--radius-sm);
+      font-size: 13px; text-align: center; font-family: var(--font-body);
+      transition: border-color .12s;
     }
-
     .qty-input:focus { outline: none; border-color: var(--blue-mid); }
     .qty-input.invalid { border-color: var(--red); }
-
     .remove-item {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      border: none;
-      background: var(--red-bg);
-      color: var(--red);
-      font-size: 14px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all var(--dur-fast);
-      line-height: 1;
+      width: 26px; height: 26px; border-radius: 50%;
+      border: none; background: var(--red-bg); color: var(--red);
+      font-size: 14px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all .12s; line-height: 1;
     }
-
     .remove-item:hover { background: var(--red); color: #fff; transform: scale(1.1); }
-
-    .empty-cart {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--gray-text);
-    }
-
-    .empty-cart .empty-icon { font-size: 40px; margin-bottom: 10px; opacity: .4; }
-    .empty-cart p { font-size: 13px; }
-
-    /* Panel de cobro */
-    .panel-cobro {
-      position: sticky;
-      top: calc(var(--topbar-h) + 20px);
-    }
-
+ 
+    /* ── Total display ────────────────────────────────────── */
     .total-display {
       background: linear-gradient(135deg, var(--navy) 0%, var(--blue-mid) 100%);
       border-radius: var(--radius-lg);
-      padding: 20px;
+      padding: 18px 20px;
       text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .total-display .total-lbl {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.6);
-      margin-bottom: 6px;
-    }
-
-    .total-display .total-val {
-      font-family: var(--font-display);
-      font-size: 36px;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1;
-    }
-
-    .total-display .total-items {
-      font-size: 12px;
-      color: rgba(255,255,255,.5);
-      margin-top: 6px;
-    }
-
-    /* Payment method pills */
-    .payment-methods {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
       margin-bottom: 14px;
     }
-
-    .pay-pill {
-      padding: 10px 8px;
-      border: 2px solid var(--gray-mid);
-      border-radius: var(--radius-md);
-      background: var(--white);
-      cursor: pointer;
-      text-align: center;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-sub);
-      transition: all var(--dur-fast) var(--ease);
+    .total-display .total-lbl {
+      font-size: 10px; font-weight: 500; letter-spacing: .1em;
+      text-transform: uppercase; color: rgba(255,255,255,.55); margin-bottom: 4px;
+    }
+    .total-display .total-usd {
+      font-family: var(--font-display); font-size: 34px; font-weight: 700;
+      color: #fff; line-height: 1;
+    }
+    .total-display .total-ves-line {
+      font-size: 13px; color: rgba(255,255,255,.55); margin-top: 5px;
+    }
+    .total-display .total-items {
+      font-size: 11px; color: rgba(255,255,255,.4); margin-top: 4px;
+    }
+ 
+    /* ── Panel de pagos ───────────────────────────────────── */
+    .payments-card { margin-bottom: 14px; }
+    .payments-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .payments-card-title { font-size: 12px; font-weight: 600; color: var(--text-sub); letter-spacing: .06em; text-transform: uppercase; }
+ 
+    .payment-progress-wrap { margin-bottom: 14px; }
+    .payment-progress-bar-bg {
+      height: 6px; background: var(--gray-light); border-radius: 99px; overflow: hidden; margin-bottom: 5px;
+    }
+    .payment-progress-bar-fill {
+      height: 100%; border-radius: 99px; transition: width .3s ease, background .3s;
+    }
+    .payment-progress-labels {
+      display: flex; justify-content: space-between; align-items: center; font-size: 12px;
+    }
+ 
+    .payment-rows { display: flex; flex-direction: column; gap: 8px; }
+ 
+    .payment-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 10px;
+      background: var(--gray-light);
+      border-radius: var(--radius-sm);
+      border: 1.5px solid transparent;
+      transition: border-color .12s;
+    }
+    .payment-row:focus-within { border-color: var(--blue-mid); background: var(--white); }
+ 
+    .payment-row-fields {
+      flex: 1; display: grid;
+      grid-template-columns: 130px 74px 1fr auto;
+      gap: 6px; align-items: center;
+    }
+ 
+    .payment-method-sel {
+      font-size: 12px; padding: 6px 8px;
+      border: 1.5px solid var(--gray-mid); border-radius: var(--radius-sm);
+      background: var(--white); color: var(--text-main);
       font-family: var(--font-body);
     }
-
-    .pay-pill .pay-icon { font-size: 18px; display: block; margin-bottom: 4px; }
-
-    .pay-pill:hover {
-      border-color: var(--navy);
-      color: var(--navy);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-sm);
+ 
+    .currency-toggle {
+      display: flex; border-radius: var(--radius-sm); overflow: hidden;
+      border: 1.5px solid var(--gray-mid);
     }
-
-    .pay-pill.selected {
-      border-color: var(--navy);
-      background: var(--navy);
-      color: #fff;
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
+    .cur-btn {
+      flex: 1; padding: 6px 0; border: none; background: var(--white);
+      font-size: 11px; font-weight: 600; cursor: pointer; transition: all .12s;
+      color: var(--text-sub); font-family: var(--font-body);
     }
-
-    /* Badge estado stock */
-    .stock-ok  { color: var(--green); font-weight: 500; }
-    .stock-low { color: var(--red);   font-weight: 600; }
-
-    /* Entrada animations */
-    .fade-in {
-      opacity: 0;
-      transform: translateY(10px);
-      animation: fadeUp .35s var(--ease) forwards;
+    .cur-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .cur-btn.active { background: var(--navy); color: #fff; }
+    .cur-btn:not(.active):not(:disabled):hover { background: var(--blue-pale); }
+ 
+    .payment-amount-wrap {
+      display: flex; align-items: center;
+      border: 1.5px solid var(--gray-mid); border-radius: var(--radius-sm);
+      background: var(--white); overflow: hidden;
     }
-    @keyframes fadeUp { to { opacity:1; transform:none; } }
-    .d-0{animation-delay:.05s} .d-1{animation-delay:.1s} .d-2{animation-delay:.15s} .d-3{animation-delay:.2s}
-
-    @media(max-width:900px) {
+    .currency-prefix {
+      padding: 0 6px; font-size: 11px; color: var(--gray-text);
+      background: var(--gray-light); border-right: 1px solid var(--gray-mid);
+      white-space: nowrap; align-self: stretch; display: flex; align-items: center;
+    }
+    .payment-amount-input {
+      flex: 1; padding: 6px 8px; border: none; font-size: 13px;
+      font-family: var(--font-body); color: var(--text-main);
+      min-width: 0;
+    }
+    .payment-amount-input:focus { outline: none; }
+ 
+    .payment-equiv {
+      font-size: 10px; color: var(--gray-text); white-space: nowrap; text-align: right;
+    }
+ 
+    .remove-payment-btn {
+      width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%;
+      border: none; background: transparent; color: var(--gray-text);
+      cursor: pointer; font-size: 13px; transition: all .12s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .remove-payment-btn:hover { background: var(--red-bg); color: var(--red); }
+ 
+    /* ── Cliente ──────────────────────────────────────────── */
+    .product-search-wrap { position: relative; }
+    .product-suggestions {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--white); border: 1.5px solid var(--blue-mid);
+      border-radius: var(--radius-md); box-shadow: var(--shadow-md);
+      z-index: 50; max-height: 220px; overflow-y: auto; display: none;
+    }
+    .product-suggestions.open { display: block; }
+    .suggestion-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; cursor: pointer; font-size: 13px;
+      border-bottom: 1px solid var(--gray-light); transition: background .12s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: var(--blue-pale); }
+    .suggestion-item .s-name { font-weight: 500; color: var(--text-main); }
+    .suggestion-item .s-meta { font-size: 11px; color: var(--gray-text); margin-top: 1px; }
+ 
+    /* ── Empty cart ───────────────────────────────────────── */
+    .empty-cart { text-align: center; padding: 36px 20px; color: var(--gray-text); }
+    .empty-cart .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: .35; }
+    .empty-cart p { font-size: 13px; }
+ 
+    /* ── Panel sticky ─────────────────────────────────────── */
+    .panel-cobro { position: sticky; top: calc(var(--topbar-h) + 20px); }
+ 
+    /* ── Animations ───────────────────────────────────────── */
+    .fade-in { opacity: 0; transform: translateY(10px); animation: fadeUp .35s var(--ease) forwards; }
+    @keyframes fadeUp { to { opacity: 1; transform: none; } }
+    .d-0 { animation-delay: .05s } .d-1 { animation-delay: .1s }
+    .d-2 { animation-delay: .15s } .d-3 { animation-delay: .2s }
+ 
+    @media (max-width: 900px) {
       .pos-grid { grid-template-columns: 1fr; }
       .panel-cobro { position: static; }
+      .payment-row-fields { grid-template-columns: 1fr 1fr; }
+      .payment-equiv { display: none; }
     }
   </style>
 </head>
 <body>
-
+ 
 <div id="toast-container" class="toast-container"></div>
-
+ 
 <!-- ===== TOPBAR ===== -->
 <nav class="topbar">
   <div class="topbar-left">
@@ -229,6 +277,10 @@
     </div>
   </div>
   <div class="topbar-right">
+    <!-- Widget tasa BCV — visible en ventas para referencia inmediata -->
+    <div class="rate-widget">
+      <div id="rate-badge"><span style="opacity:.5;font-size:12px">Cargando tasa...</span></div>
+    </div>
     <div class="topbar-notif" title="Notificaciones">🔔<span class="notif-dot" id="notif-dot" style="display:none"></span></div>
     <div class="topbar-user">
       <div class="topbar-avatar" id="navbar-avatar">??</div>
@@ -240,7 +292,7 @@
     <button class="btn-logout" id="btn-logout">⏏ Salir</button>
   </div>
 </nav>
-
+ 
 <!-- ===== SIDEBAR ===== -->
 <aside class="sidebar" id="sidebar">
   <nav>
@@ -263,29 +315,28 @@
     <p style="font-size:10px;color:rgba(255,255,255,.25);line-height:1.5">v1.0 — Bases de Datos 2026</p>
   </div>
 </aside>
-
+ 
 <!-- ===== MAIN ===== -->
 <div class="app-wrapper">
   <main class="main-content">
-
-    <div class="page-header fade-in d-0" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+ 
+    <div class="page-header fade-in d-0"
+         style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
         <h1>Registrar venta</h1>
-        <p>Agrega productos, elige el método de pago y confirma</p>
+        <p>Agrega productos, distribuye los pagos y confirma</p>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <select class="form-control" id="sucursal-sel" style="width:200px" title="Sucursal de la venta">
-          <option value="">Cargando sucursales...</option>
-        </select>
-      </div>
+      <select class="form-control" id="sucursal-sel" style="width:200px" title="Sucursal de la venta">
+        <option value="">Cargando sucursales...</option>
+      </select>
     </div>
-
+ 
     <div class="pos-grid">
-
-      <!-- ===== COLUMNA IZQUIERDA: carrito ===== -->
+ 
+      <!-- ===== COLUMNA IZQUIERDA ===== -->
       <div>
-
-        <!-- Catálogo de productos -->
+ 
+        <!-- Catálogo -->
         <div class="card fade-in d-1" style="margin-bottom:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
             <p style="font-size:13px;font-weight:500">Productos disponibles</p>
@@ -296,180 +347,202 @@
             <input class="form-control" id="product-search"
                    placeholder="Buscar por nombre..." autocomplete="off"/>
           </div>
-          <div id="catalog-list" style="max-height:280px;overflow-y:auto">
+          <div id="catalog-list" style="max-height:300px;overflow-y:auto">
             <p style="font-size:13px;color:var(--gray-text);text-align:center;padding:20px">
               Selecciona una sucursal para ver los productos
             </p>
           </div>
         </div>
-
-        <!-- Tabla de items -->
+ 
+        <!-- Carrito -->
         <div class="card fade-in d-2">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <p style="font-size:13px;font-weight:500">Productos en la venta</p>
             <span class="badge badge-navy" id="items-count">0 items</span>
           </div>
-
-          <div id="cart-container">
-            <div class="empty-cart" id="empty-cart">
-              <div class="empty-icon">🛒</div>
-              <p>Aún no has agregado productos.<br/>Usa el buscador de arriba.</p>
-            </div>
-
-            <table class="items-table" id="items-table" style="display:none">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th style="text-align:center">Cant.</th>
-                  <th style="text-align:right">P. unit.</th>
-                  <th style="text-align:right">Subtotal</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="items-body"></tbody>
-            </table>
+ 
+          <div id="empty-cart" class="empty-cart">
+            <div class="empty-icon">🛒</div>
+            <p>Aún no has agregado productos.<br/>Usa el buscador de arriba.</p>
           </div>
-
-          <!-- Stock alert -->
+ 
+          <table class="items-table" id="items-table" style="display:none">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th style="text-align:center">Cant.</th>
+                <th style="text-align:right">P. unit.</th>
+                <th style="text-align:right">Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="items-body"></tbody>
+          </table>
+ 
           <div class="alert alert-danger mt-12" id="stock-error" style="display:none">
             <span class="alert-icon">⚠</span>
-            <span id="stock-error-msg">Stock insuficiente para uno o más productos.</span>
+            Stock insuficiente para uno o más productos.
           </div>
         </div>
+ 
       </div>
-
+ 
       <!-- ===== COLUMNA DERECHA: cobro ===== -->
       <div class="panel-cobro fade-in d-3">
-
+ 
         <!-- Total -->
         <div class="total-display">
           <p class="total-lbl">Total a cobrar</p>
-          <p class="total-val" id="total-display">$0</p>
+          <p class="total-usd" id="total-display">$0.00</p>
+          <p class="total-ves-line" id="total-ves-display">—</p>
           <p class="total-items" id="total-items-label">0 productos</p>
         </div>
-
-        <!-- Método de pago -->
-        <div class="card" style="margin-bottom:14px">
-          <p style="font-size:12px;font-weight:500;margin-bottom:10px;color:var(--text-sub)">MÉTODO DE PAGO</p>
-          <div class="payment-methods">
-            <button class="pay-pill" data-method="CASH">
-              <span class="pay-icon">💵</span> Efectivo
-            </button>
-            <button class="pay-pill" data-method="CARD">
-              <span class="pay-icon">💳</span> Tarjeta
-            </button>
-            <button class="pay-pill" data-method="TRANSFER">
-              <span class="pay-icon">📱</span> Transferencia
-            </button>
-            <button class="pay-pill" data-method="CREDIT">
-              <span class="pay-icon">📋</span> Crédito
-            </button>
+ 
+        <!-- Panel de pagos -->
+        <div class="card payments-card">
+          <div class="payments-card-header">
+            <span class="payments-card-title">💳 Distribución de pagos</span>
           </div>
-          <p class="form-error" id="payment-error" style="display:none">
-            <span>⚠</span> Selecciona un método de pago.
-          </p>
+          <div id="payments-panel">
+            <p style="font-size:13px;color:var(--gray-text);text-align:center;padding:16px 0">
+              Agrega productos para habilitar los pagos
+            </p>
+          </div>
         </div>
-
-        <!-- Cliente (visible solo en crédito) -->
+ 
+        <!-- Cliente -->
         <div class="card" id="client-section" style="margin-bottom:14px">
-          <p style="font-size:12px;font-weight:500;margin-bottom:4px;color:var(--text-sub)">CLIENTE</p>
-          <p id="client-hint" style="font-size:11px;color:var(--gray-text);margin-bottom:10px">Opcional — asocia la venta a un cliente.</p>
-          <div class="form-group mb-0 product-search-wrap">
+          <p style="font-size:12px;font-weight:600;margin-bottom:4px;color:var(--text-sub);letter-spacing:.05em;text-transform:uppercase">Cliente</p>
+          <p id="client-hint" style="font-size:11px;color:var(--gray-text);margin-bottom:10px">
+            Opcional — asocia la venta a un cliente.
+          </p>
+          <div class="product-search-wrap">
             <div class="input-wrapper">
               <span class="input-icon">👤</span>
               <input class="form-control" id="client-search"
                      placeholder="Buscar por nombre o teléfono..." autocomplete="off"/>
             </div>
             <div class="product-suggestions" id="client-suggestions"></div>
-            <p class="form-error" id="client-error" style="display:none">
-              <span>⚠</span> Debes asociar un cliente para ventas a crédito.
-            </p>
           </div>
-          <div id="client-selected" style="display:none;margin-top:10px;padding:10px 12px;background:var(--blue-pale);border-radius:var(--radius-sm);font-size:13px">
+          <p class="form-error" id="client-error" style="display:none">
+            <span>⚠</span> Debes asociar un cliente para ventas a crédito.
+          </p>
+          <div id="client-selected" style="display:none;margin-top:10px;padding:10px 12px;
+               background:var(--blue-pale);border-radius:var(--radius-sm);font-size:13px">
             <strong id="client-name-display"></strong>
             <span style="color:var(--gray-text);margin-left:8px" id="client-balance-display"></span>
-            <button type="button" onclick="Ventas.clearClient()" style="float:right;background:none;border:none;color:var(--red);cursor:pointer;font-size:12px">✕ Quitar</button>
+            <button type="button" onclick="Ventas.clearClient()"
+                    style="float:right;background:none;border:none;color:var(--red);cursor:pointer;font-size:12px">
+              ✕ Quitar
+            </button>
           </div>
         </div>
-
-        <!-- Observaciones -->
-        <div class="card" style="margin-bottom:16px">
-          <p style="font-size:12px;font-weight:500;margin-bottom:8px;color:var(--text-sub)">OBSERVACIONES</p>
-          <textarea class="form-control" id="notes" rows="2"
-                    placeholder="Nota opcional sobre la venta..." style="resize:none"></textarea>
-        </div>
-
+ 
         <!-- Botones -->
-        <button type="button" class="btn btn-secondary btn-block mb-8" onclick="Ventas.clearCart()" id="btn-cancel">
+        <button type="button" class="btn btn-secondary btn-block mb-8"
+                onclick="Ventas.clearCart()">
           🗑 Limpiar venta
         </button>
         <button class="btn btn-primary btn-lg btn-block" id="btn-confirmar">
           ✓ Confirmar venta
         </button>
-
+ 
       </div>
     </div>
-    <!-- ===== HISTORIAL DE VENTAS ===== --
-
+ 
   </main>
 </div>
-
+ 
+<!-- ===== MODAL TASA BCV ===== -->
+<div class="modal-overlay" id="modal-rate">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-header">
+      <h2 class="modal-title">Actualizar tasa BCV</h2>
+      <button class="modal-close" onclick="document.getElementById('modal-rate').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-sub);margin-bottom:14px">
+        Ingresa la tasa del Banco Central de Venezuela de hoy.<br>
+        <span style="font-size:11px;color:var(--gray-text)">Ej: 567.68 significa 1 USD = 567.68 Bs.</span>
+      </p>
+      <div class="form-group">
+        <label class="form-label">Tasa BCV (Bs. por 1 USD)</label>
+        <div class="input-wrapper">
+          <span class="input-icon">Bs.</span>
+          <input class="form-control" id="rate-input" type="number"
+                 step="0.01" min="0.01" placeholder="Ej: 567.68"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary"
+              onclick="document.getElementById('modal-rate').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-rate">Guardar tasa</button>
+    </div>
+  </div>
+</div>
+ 
 <!-- ===== MODAL CONFIRMACIÓN ===== -->
 <div class="modal-overlay" id="modal-confirm">
-  <div class="modal" style="max-width:420px">
+  <div class="modal" style="max-width:440px">
     <div class="modal-header">
       <h2 class="modal-title">Confirmar venta</h2>
-      <button class="modal-close" onclick="closeModal('modal-confirm')">✕</button>
+      <button class="modal-close" onclick="document.getElementById('modal-confirm').classList.remove('open')">✕</button>
     </div>
     <div class="modal-body">
       <div id="confirm-summary" style="font-size:13px;color:var(--text-sub);line-height:1.8"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-confirm')">Cancelar</button>
+      <button class="btn btn-secondary"
+              onclick="document.getElementById('modal-confirm').classList.remove('open')">Cancelar</button>
       <button class="btn btn-success" id="btn-do-confirm">✓ Registrar venta</button>
     </div>
   </div>
 </div>
-
+ 
 <!-- ===== MODAL LOGOUT ===== -->
 <div class="modal-overlay" id="modal-logout">
   <div class="modal" style="max-width:380px">
     <div class="modal-header">
       <h2 class="modal-title">Cerrar sesión</h2>
-      <button class="modal-close" onclick="closeModal('modal-logout')">✕</button>
+      <button class="modal-close" onclick="document.getElementById('modal-logout').classList.remove('open')">✕</button>
     </div>
-    <div class="modal-body"><p style="font-size:13px;color:var(--text-sub)">¿Deseas cerrar tu sesión?</p></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-sub)">¿Deseas cerrar tu sesión?</p>
+    </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-logout')">Cancelar</button>
+      <button class="btn btn-secondary"
+              onclick="document.getElementById('modal-logout').classList.remove('open')">Cancelar</button>
       <button class="btn btn-danger" id="confirm-logout">Sí, salir</button>
     </div>
   </div>
 </div>
-
+ 
 <script>window.CBC_API_ORIGIN = window.CBC_API_ORIGIN || 'http://localhost:8082';</script>
 <script src="../js/api.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/validaciones.js"></script>
 <script src="../js/layout.js"></script>
-
 <script src="../js/ventas.js"></script>
 <script src="../js/menu.js"></script>
 <script>
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-window.closeModal = closeModal;
-document.querySelectorAll('.modal-overlay').forEach(m =>
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); })
-);
-
-Auth.guardPage().then((user) => {
-  if (!user) return;
-  UI.renderNavbarUser();
-  if (window.UserMenu) UserMenu.renderUserDropdown();
-  document.getElementById('btn-logout').addEventListener('click', () => openModal('modal-logout'));
-  document.getElementById('confirm-logout').addEventListener('click', () => Auth.logout());
-  Ventas.init(); // ← directo
-});
+  function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
+  function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+  window.openModal  = openModal;
+  window.closeModal = closeModal;
+ 
+  document.querySelectorAll('.modal-overlay').forEach(m =>
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); })
+  );
+ 
+  Auth.guardPage().then(user => {
+    if (!user) return;
+    UI.renderNavbarUser();
+    if (window.UserMenu) UserMenu.renderUserDropdown();
+    document.getElementById('btn-logout').addEventListener('click', () => openModal('modal-logout'));
+    document.getElementById('confirm-logout').addEventListener('click', () => Auth.logout());
+    Ventas.init();
+  });
 </script>
 </body>
 </html>
