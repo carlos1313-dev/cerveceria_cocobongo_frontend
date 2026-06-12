@@ -83,19 +83,10 @@ const Ventas = (() => {
  
   /* ── Precio VES efectivo del producto ───────────────────── */
   function getProductPriceVes(product) {
-    // 1. Si hay precio VES guardado en BD, usarlo directamente
-    if (product.priceVes && product.priceVes > 0) return product.priceVes;
-    
-    // 2. Si no, calcular con la MISMA fórmula que inventario.js
-    if (!currentRate) return 0;
-    
-    // USAR EL COSTO (no el precio de venta) para calcular el precio VES sugerido
-    const cost = product.cost || 0;
-    if (!cost) return 0;
-    
-    // Fórmula idéntica a CurrencyConverter.calculateSellingPriceVes()
-    const raw = cost * 1.30 * (currentRate.rate + 5);
-    return Math.ceil(raw / 10) * 10;
+  if (product.priceVes && product.priceVes > 0) return product.priceVes;
+  if (!currentRate) return 0;
+  const raw = product.price * (currentRate.rate + 5);
+  return Math.ceil(raw / 10) * 10;
 }
  
   /* ============================================================

@@ -51,9 +51,9 @@ const Inventario = (() => {
    * Fórmula: cost * 1.30 * (rate + 5), redondeado al múltiplo de 10 ↑
    * Refleja el algoritmo de CurrencyConverter.calculateSellingPriceVes()
    */
-  function suggestedPriceVes(costUsd) {
-    if (!currentRate?.rate || !costUsd) return 0;
-    const raw = costUsd * 1.30 * (currentRate.rate + 5);
+  function suggestedPriceVes(priceUsd) {
+    if (!currentRate?.rate || !priceUsd) return 0;
+    const raw = priceUsd * (currentRate.rate + 5);
     return Math.ceil(raw / 10) * 10;
   }
  
@@ -64,8 +64,8 @@ const Inventario = (() => {
    */
   function effectivePriceVes(p) {
     if (p.priceVes && Number(p.priceVes) > 0) return Number(p.priceVes);
-    return suggestedPriceVes(Number(p.cost ?? 0));
-  }
+    return suggestedPriceVes(Number(p.price ?? 0));  // ← Usa precio como fallback
+}
  
   function effectiveCostVes(p) {
     if (p.costVes && Number(p.costVes) > 0) return Number(p.costVes);
@@ -403,9 +403,9 @@ const Inventario = (() => {
     // Precio VES: usar el guardado si existe, si no calcular sugerido
     const vesValue = p.priceVes && Number(p.priceVes) > 0
       ? p.priceVes
-      : suggestedPriceVes(Number(p.cost ?? 0));
+      : suggestedPriceVes(Number(p.price ?? 0)); //usa price
     setVal('form-price-ves', vesValue || '');
-    renderPriceVesSuggested(Number(p.cost ?? 0));
+    renderPriceVesSuggested(Number(p.price ?? 0)); //usa price
  
     clearAllErrors('product-form');
     $('form-type')?.dispatchEvent(new Event('change'));
@@ -413,37 +413,37 @@ const Inventario = (() => {
   }
  
   /* ── Precio VES sugerido en el formulario ────────────────── */
-  function renderPriceVesSuggested(costUsd) {
-    const el = $('price-ves-suggested');
-    if (!el) return;
-    if (!currentRate || !costUsd) { el.style.display = 'none'; return; }
-    const suggested = suggestedPriceVes(costUsd);
-    el.style.display  = '';
-    el.innerHTML = `
-      <span style="font-size:11px;color:var(--text-sub)">
-        Sugerido: <strong>${fmtVES(suggested)}</strong>
-        <button type="button" class="btn-link" style="font-size:11px;margin-left:6px;color:var(--blue-mid)"
-                onclick="Inventario.applyVesSuggested()">Usar este</button>
-      </span>`;
-  }
+  function renderPriceVesSuggested(priceUsd) {
+  const el = $('price-ves-suggested');
+  if (!el) return;
+  if (!currentRate || !priceUsd) { el.style.display = 'none'; return; }
+  const suggested = suggestedPriceVes(priceUsd);
+  el.style.display = '';
+  el.innerHTML = `
+    <span style="font-size:11px;color:var(--text-sub)">
+      Sugerido: <strong>${fmtVES(suggested)}</strong>
+      <button type="button" class="btn-link" style="font-size:11px;margin-left:6px;color:var(--blue-mid)"
+              onclick="Inventario.applyVesSuggested()">Usar este</button>
+    </span>`;
+}
  
   // Botón "Usar este" — aplica el precio sugerido al campo
   function applyVesSuggested() {
-    const cost      = parseFloat(getVal('form-cost')) || 0;
-    const suggested = suggestedPriceVes(cost);
-    setVal('form-price-ves', suggested);
-  }
+  const priceUsd  = parseFloat(getVal('form-price')) || 0;
+  const suggested = suggestedPriceVes(priceUsd);
+  setVal('form-price-ves', suggested);
+}
  
-  /* ── Recalcular precio VES cuando cambia el costo ────────── */
-  function onCostChange() {
-    const cost = parseFloat($('form-cost')?.value) || 0;
-    renderPriceVesSuggested(cost);
-    // Si el campo precio VES está vacío, precargar el sugerido
-    const currentVes = parseFloat(getVal('form-price-ves')) || 0;
-    if (currentVes === 0 && cost > 0) {
-      setVal('form-price-ves', suggestedPriceVes(cost));
-    }
+  /* ── Recalcular precio VES cuando cambia el precioUsd ────────── */
+  // Nuevo — escucha el campo precio USD
+function onPriceUsdChange() {
+  const priceUsd = parseFloat($('form-price')?.value) || 0;
+  renderPriceVesSuggested(priceUsd);
+  const currentVes = parseFloat(getVal('form-price-ves')) || 0;
+  if (currentVes === 0 && priceUsd > 0) {
+    setVal('form-price-ves', suggestedPriceVes(priceUsd));
   }
+}
  
   /* ============================================================
      GUARDAR PRODUCTO
@@ -488,7 +488,7 @@ const Inventario = (() => {
  
     // Precio VES: usar el del campo si fue editado, si no calcular sugerido
     const priceVesRaw = parseFloat(getVal('form-price-ves')) || 0;
-    const priceVes    = priceVesRaw > 0 ? priceVesRaw : suggestedPriceVes(costUsd);
+    const priceVes    = priceVesRaw > 0 ? priceVesRaw : suggestedPriceVes(priceUsd); //usa priceUsd
  
     const payload = {
       name:         getVal('form-name').trim(),
@@ -721,8 +721,8 @@ const Inventario = (() => {
     $('btn-view-usd')?.addEventListener('click', () => setViewCurrency('USD'));
     $('btn-view-ves')?.addEventListener('click', () => setViewCurrency('VES'));
  
-    // Recalcular precio VES sugerido al cambiar el costo en el formulario
-    $('form-cost')?.addEventListener('input', onCostChange);
+    // Recalcular precio VES sugerido al cambiar el precio en el formulario //NUEVO
+    $('form-price')?.addEventListener('input', onPriceUsdChange);
  
     document.querySelectorAll('.modal-overlay').forEach(m => {
       m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
