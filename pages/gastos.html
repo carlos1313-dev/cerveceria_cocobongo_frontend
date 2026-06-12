@@ -16,6 +16,43 @@
       align-items: end;
     }
     .mb-0 { margin-bottom: 0; }
+    
+    /* Estilos para el selector de moneda y preview */
+    #gasto-currency {
+      min-width: 160px;
+    }
+    
+    #gasto-amount-preview {
+      display: none;
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 4px;
+      background: var(--gray-light);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+    
+    #gastos-rate-info {
+      font-size: 12px;
+      color: var(--text-sub);
+      background: var(--blue-pale);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+      border-left: 3px solid var(--blue-mid);
+    }
+    
+    .currency-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .currency-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
   </style>
 </head>
 <body>
@@ -37,6 +74,9 @@
         <span class="badge badge-blue">ADMIN</span>
       </div>
  
+      <!-- Info tasa -->
+      <div id="gastos-rate-info">💱 Cargando tasa de cambio...</div>
+ 
       <form id="gastos-form" novalidate autocomplete="off">
         <div class="form-grid-3">
  
@@ -57,8 +97,17 @@
  
           <!-- total -->
           <div class="form-group">
-            <label class="form-label" for="gasto-total">Monto (COP) <span class="required">*</span></label>
-            <input class="form-control" type="number" id="gasto-total" min="1" step="100" placeholder="0"/>
+            <label class="form-label" for="gasto-total">Monto <span class="required">*</span></label>
+            <div class="currency-row">
+              <input class="form-control" type="number" id="gasto-total" min="1" step="100" placeholder="0" style="flex:1"/>
+              <!-- Selector moneda -->
+              <select id="gasto-currency" class="form-control">
+                <option value="USD">USD — Dólares</option>
+                <option value="VES">VES — Bolívares</option>
+              </select>
+            </div>
+            <!-- Preview equivalente -->
+            <span id="gasto-amount-preview" style="display:none;font-size:11px;color:var(--text-sub)"></span>
             <p class="form-error" id="gasto-total-error"><span>⚠</span> <span class="err-text"></span></p>
           </div>
  
@@ -85,6 +134,8 @@
           </select>
           <p class="form-error" id="gasto-idBranch-error"><span>⚠</span> <span class="err-text"></span></p>
         </div>
+
+        
  
         <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">
           <button type="button" class="btn btn-secondary" id="btn-clear-gasto">Limpiar</button>
