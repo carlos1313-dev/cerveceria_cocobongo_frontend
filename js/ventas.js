@@ -781,7 +781,8 @@ const Ventas = (() => {
     saveRate,
     addPaymentRow,
     removePaymentRow,
-    updatePaymentField
+    updatePaymentField,
+    scrapeBCV
   };
 
 })();
