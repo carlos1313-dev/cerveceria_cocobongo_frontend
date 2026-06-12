@@ -305,7 +305,7 @@ const Clientes = (() => {
     const btn = $('btn-save-payment');
     UI.setLoading(btn, true);
     try {
-      const currentUser = Auth.getCurrentUser();
+      const currentUser = Auth.getUser();
       if (!currentUser || !currentUser.id) {
         throw new Error('Usuario no autenticado');
       }
