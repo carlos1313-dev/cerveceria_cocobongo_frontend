@@ -185,7 +185,11 @@ const API = (() => {
       /** GET /api/v1/exchange-rate/current — tasa vigente */
       getCurrent: () => get('/exchange-rate/current'),
       /** PATCH /api/v1/exchange-rate — actualizar tasa del día */
-      update: (rate) => patch('/exchange-rate', { rate })
+      update: (rate) => patch('/exchange-rate', { rate }),
+
+      scrape: () => post('/exchange-rate/scrape'),  // ← Nuevo endpoint
+
+      test: () => get('/exchange-rate/test-scrape')  // ← Para diagnóstico
     },
  
     branches: {
