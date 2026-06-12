@@ -61,15 +61,16 @@ const Ventas = (() => {
   function normalizeProduct(raw) {
     const id = raw.idProduct ?? raw.id ?? raw.productId;
     return {
-      id,
-      name:     raw.productName ?? raw.name ?? 'Producto',
-      price:    Number(raw.price ?? 0),
-      priceVes: raw.priceVes ? Number(raw.priceVes) : null,   // precio VES guardado en BD
-      stock:    Number(raw.stock ?? 0),
-      minStock: Number(raw.minStock ?? raw.min_stock ?? 0),
-      type:     raw.productType ?? raw.type
+        id,
+        name:     raw.productName ?? raw.name ?? 'Producto',
+        price:    Number(raw.price ?? 0),
+        cost:     Number(raw.cost ?? 0),        // ← AÑADIR: costo del producto
+        priceVes: raw.priceVes ? Number(raw.priceVes) : null,
+        stock:    Number(raw.stock ?? 0),
+        minStock: Number(raw.minStock ?? raw.min_stock ?? 0),
+        type:     raw.productType ?? raw.type
     };
-  }
+}
  
   function normalizeClient(raw) {
     return {
@@ -81,14 +82,21 @@ const Ventas = (() => {
   }
  
   /* ── Precio VES efectivo del producto ───────────────────── */
-  // Usa el precio VES guardado si existe; si no, calcula on-the-fly
   function getProductPriceVes(product) {
+    // 1. Si hay precio VES guardado en BD, usarlo directamente
     if (product.priceVes && product.priceVes > 0) return product.priceVes;
+    
+    // 2. Si no, calcular con la MISMA fórmula que inventario.js
     if (!currentRate) return 0;
-    // Fórmula: price_usd * 1.30 * (rate + 5), redondeado al múltiplo de 10 ↑
-    const raw = product.price * 1.30 * (currentRate.rate + 5);
+    
+    // USAR EL COSTO (no el precio de venta) para calcular el precio VES sugerido
+    const cost = product.cost || 0;
+    if (!cost) return 0;
+    
+    // Fórmula idéntica a CurrencyConverter.calculateSellingPriceVes()
+    const raw = cost * 1.30 * (currentRate.rate + 5);
     return Math.ceil(raw / 10) * 10;
-  }
+}
  
   /* ============================================================
      INIT
@@ -211,51 +219,54 @@ const Ventas = (() => {
     const container = $('catalog-list');
     const countEl   = $('catalog-count');
     if (!container) return;
- 
+
     const q        = ($('product-search')?.value || '').trim().toLowerCase();
     const filtered = q ? data.filter(p => p.name.toLowerCase().includes(q)) : data;
- 
+
     if (countEl) countEl.textContent = `${filtered.length} producto${filtered.length !== 1 ? 's' : ''}`;
- 
+
     if (!filtered.length) {
-      container.innerHTML = `<p style="font-size:13px;color:var(--gray-text);text-align:center;padding:20px">
-        ${q ? `Sin resultados para "${esc(q)}"` : 'No hay productos con stock en esta sucursal'}
-      </p>`;
-      return;
+        container.innerHTML = `<p style="font-size:13px;color:var(--gray-text);text-align:center;padding:20px">
+            ${q ? `Sin resultados para "${esc(q)}"` : 'No hay productos con stock en esta sucursal'}
+        </p>`;
+        return;
     }
- 
+
     container.innerHTML = filtered.map(p => {
-      const reserved  = cart.find(i => i.product.id === p.id)?.quantity || 0;
-      const available = p.stock - reserved;
-      const priceVes  = getProductPriceVes(p);
-      const noStock   = available <= 0;
- 
-      return `
-        <div class="catalog-item" data-product-id="${p.id}">
-          <div class="catalog-item-info">
-            <div class="catalog-item-name">${esc(p.name)}</div>
-            <div class="catalog-item-prices">
-              <span class="price-usd">${fmtUSD(p.price)}</span>
-              ${currentRate ? `<span class="price-ves">${fmtVES(priceVes)}</span>` : ''}
-            </div>
-          </div>
-          <div class="catalog-item-right">
-            <span class="stock-chip ${available <= p.minStock ? 'stock-low' : 'stock-ok'}">
-              ${available <= 0 ? '✕ Agotado' : `${available} uds`}
-            </span>
-            <button class="btn btn-primary btn-sm add-product-btn" data-id="${p.id}"
-                    ${noStock ? 'disabled' : ''}
-                    style="margin-top:4px;padding:4px 12px;font-size:11px">
-              ${noStock ? 'Sin stock' : '+ Agregar'}
-            </button>
-          </div>
-        </div>`;
+        const reserved  = cart.find(i => i.product.id === p.id)?.quantity || 0;
+        const available = p.stock - reserved;
+        const priceVes  = getProductPriceVes(p);  // ← Ahora usa el costo correctamente
+        const noStock   = available <= 0;
+
+        return `
+            <div class="catalog-item" data-product-id="${p.id}">
+                <div class="catalog-item-info">
+                    <div class="catalog-item-name">${esc(p.name)}</div>
+                    <div class="catalog-item-prices">
+                        <span class="price-usd">${fmtUSD(p.price)}</span>
+                        ${currentRate ? `<span class="price-ves">${fmtVES(priceVes)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="catalog-item-right">
+                    <span class="stock-chip ${available <= p.minStock ? 'stock-low' : 'stock-ok'}">
+                        ${available <= 0 ? '✕ Agotado' : `${available} uds`}
+                    </span>
+                    <button class="btn btn-primary btn-sm add-product-btn" data-id="${p.id}"
+                            ${noStock ? 'disabled' : ''}
+                            style="margin-top:4px;padding:4px 12px;font-size:11px">
+                        ${noStock ? 'Sin stock' : '+ Agregar'}
+                    </button>
+                </div>
+            </div>`;
     }).join('');
- 
+
     container.querySelectorAll('.add-product-btn:not([disabled])').forEach(btn => {
-      btn.addEventListener('click', e => { e.stopPropagation(); addProduct(parseInt(btn.dataset.id, 10)); });
+        btn.addEventListener('click', e => { 
+            e.stopPropagation(); 
+            addProduct(parseInt(btn.dataset.id, 10)); 
+        });
     });
-  }
+}
  
   /* ============================================================
      CARRITO
@@ -316,54 +327,54 @@ const Ventas = (() => {
     const table = $('items-table');
     const tbody = $('items-body');
     if (!tbody) return;
- 
+
     if (cart.length === 0) {
-      if (empty) empty.style.display = '';
-      if (table) table.style.display = 'none';
-      recalculate();
-      return;
+        if (empty) empty.style.display = '';
+        if (table) table.style.display = 'none';
+        recalculate();
+        return;
     }
- 
+
     if (empty) empty.style.display = 'none';
     if (table) table.style.display = '';
- 
+
     let hasStockIssue = false;
     tbody.innerHTML = cart.map((item, idx) => {
-      const over    = item.quantity > item.product.stock;
-      if (over) hasStockIssue = true;
-      const priceVes  = getProductPriceVes(item.product);
-      const totalVes  = priceVes * item.quantity;
- 
-      return `
-        <tr class="${over ? 'out-of-stock' : ''}">
-          <td>
-            <div style="font-weight:500">${esc(item.product.name)}</div>
-            <div style="font-size:11px;margin-top:2px;color:${item.product.stock <= item.product.minStock ? 'var(--red)' : 'var(--green)'}">
-              Stock: ${item.product.stock}
-            </div>
-          </td>
-          <td style="text-align:center">
-            <input class="qty-input ${over ? 'invalid' : ''}" type="number"
-                   min="1" max="${item.product.stock}" value="${item.quantity}"
-                   onchange="Ventas.changeQty(${idx}, this.value)"/>
-          </td>
-          <td style="text-align:right">
-            <span style="color:var(--navy);font-weight:600">${fmtUSD(item.product.price)}</span>
-            ${currentRate ? `<br><span style="color:var(--gray-text);font-size:11px">${fmtVES(priceVes)}</span>` : ''}
-          </td>
-          <td style="text-align:right">
-            <span style="font-weight:500">${fmtUSD(item.product.price * item.quantity)}</span>
-            ${currentRate ? `<br><span style="color:var(--gray-text);font-size:11px">${fmtVES(totalVes)}</span>` : ''}
-          </td>
-          <td style="text-align:center">
-            <button type="button" class="remove-item" onclick="Ventas.removeItem(${idx})">✕</button>
-          </td>
-        </tr>`;
+        const over    = item.quantity > item.product.stock;
+        if (over) hasStockIssue = true;
+        const priceVes  = getProductPriceVes(item.product);  // ← Precio VES correcto
+        const totalVes  = priceVes * item.quantity;
+
+        return `
+            <tr class="${over ? 'out-of-stock' : ''}">
+                <td>
+                    <div style="font-weight:500">${esc(item.product.name)}</div>
+                    <div style="font-size:11px;margin-top:2px;color:${item.product.stock <= item.product.minStock ? 'var(--red)' : 'var(--green)'}">
+                        Stock: ${item.product.stock}
+                    </div>
+                </td>
+                <td style="text-align:center">
+                    <input class="qty-input ${over ? 'invalid' : ''}" type="number"
+                           min="1" max="${item.product.stock}" value="${item.quantity}"
+                           onchange="Ventas.changeQty(${idx}, this.value)"/>
+                </td>
+                <td style="text-align:right">
+                    <span style="color:var(--navy);font-weight:600">${fmtUSD(item.product.price)}</span>
+                    ${currentRate ? `<br><span style="color:var(--gray-text);font-size:11px">${fmtVES(priceVes)}</span>` : ''}
+                </td>
+                <td style="text-align:right">
+                    <span style="font-weight:500">${fmtUSD(item.product.price * item.quantity)}</span>
+                    ${currentRate ? `<br><span style="color:var(--gray-text);font-size:11px">${fmtVES(totalVes)}</span>` : ''}
+                </td>
+                <td style="text-align:center">
+                    <button type="button" class="remove-item" onclick="Ventas.removeItem(${idx})">✕</button>
+                </td>
+            </tr>`;
     }).join('');
- 
+
     $('stock-error').style.display = hasStockIssue ? 'flex' : 'none';
     recalculate();
-  }
+}
  
   function recalculate() {
     const total = cartTotal();
