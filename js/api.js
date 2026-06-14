@@ -5,8 +5,13 @@
  
 const API = (() => {
  
-  const API_ORIGIN = window.CBC_API_ORIGIN ?? '';
-  const BASE_URL   = `${API_ORIGIN}/api/v1`;
+  const productionUrl = 'https://cerveceriacocobongobackend-production.up.railway.app';
+  
+  const API_ORIGIN = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? (window.CBC_API_ORIGIN || 'http://localhost:8082')
+    : productionUrl;
+
+  const BASE_URL = `${API_ORIGIN}/api/v1`;
  
   function buildHttpError(message, status, data = null) {
     const err = new Error(message || 'Error en la solicitud.');
