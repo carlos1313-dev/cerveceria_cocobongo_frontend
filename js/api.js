@@ -5,7 +5,7 @@
  
 const API = (() => {
  
-  const productionUrl = 'https://cerveceriacocobongobackend-production.up.railway.app';
+  const productionUrl = 'https://cerveceria-cocobongo-backend.onrender.com';
   
   const API_ORIGIN = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? (window.CBC_API_ORIGIN || 'http://localhost:8082')
